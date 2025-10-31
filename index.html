@@ -1,0 +1,1180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#6366f1">
+    <title>Expense Tracker Pro</title>
+    <link rel="manifest" href="manifest.json">
+    <link rel="stylesheet" href="css/styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@4/dist/tesseract.min.js"></script>
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="header-content">
+            <div class="header-left">
+                <h1>💰 Expense Tracker Pro</h1>
+                <div class="ai-insights-badge" id="aiInsightsBadge">
+                    <span class="pulse-dot"></span>
+                    <span id="insightCount">0</span> insights
+                </div>
+            </div>
+            <div class="header-actions">
+                <select id="currencySelector" class="currency-selector">
+                    <option value="NPR">NPR - रू</option>
+                    <option value="USD">USD - $</option>
+                    <option value="GBP">GBP - £</option>
+                </select>
+                <button id="addCurrencyBtn" class="icon-btn" title="Add Currency">➕💱</button>
+                <button id="scanReceiptBtn" class="icon-btn receipt-btn" title="Scan Receipt">📸</button>
+                <button id="notificationBtn" class="icon-btn" title="Notifications">
+                    🔔
+                    <span class="notification-badge" id="notificationBadge">0</span>
+                </button>
+                <button id="menuBtn" class="icon-btn">☰</button>
+            </div>
+        </div>
+        <div class="balance-summary">
+            <div class="balance-card cash">
+                <span class="label">💵 Cash Balance</span>
+                <span class="amount" id="cashBalance">0.00</span>
+            </div>
+            <div class="balance-card bank">
+                <span class="label">🏦 Bank Balance</span>
+                <span class="amount" id="bankBalance">0.00</span>
+            </div>
+            <div class="balance-card total">
+                <span class="label">💎 Total Balance</span>
+                <span class="amount" id="totalBalance">0.00</span>
+            </div>
+        </div>
+    </header>
+
+    <!-- Navigation Tabs -->
+    <nav class="tabs">
+        <button class="tab active" data-tab="dashboard">📊 Dashboard</button>
+        <button class="tab" data-tab="transactions">💸 Transactions</button>
+        <button class="tab" data-tab="analytics">📈 Analytics</button>
+        <button class="tab" data-tab="shopping">🛒 Shopping</button>
+        <button class="tab" data-tab="subscriptions">🔄 Subscriptions</button>
+        <button class="tab" data-tab="wishlist">⭐ Wishlist</button>
+        <button class="tab" data-tab="documents">📋 Documents</button>
+        <button class="tab" data-tab="insights">🤖 AI Insights</button>
+        <button class="tab" data-tab="more">⚙️ More</button>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="container">
+        
+        <!-- Dashboard Tab -->
+        <section id="dashboard" class="tab-content active">
+            <!-- Quick Actions -->
+            <div class="quick-actions">
+                <button class="quick-action-btn income" data-action="income">
+                    <span class="icon">💰</span>
+                    <span>Add Income</span>
+                </button>
+                <button class="quick-action-btn expense" data-action="expense">
+                    <span class="icon">💸</span>
+                    <span>Add Expense</span>
+                </button>
+                <button class="quick-action-btn scan" id="quickScanBtn">
+                    <span class="icon">📸</span>
+                    <span>Scan Receipt</span>
+                </button>
+                <button class="quick-action-btn report" data-goto="analytics">
+                    <span class="icon">📊</span>
+                    <span>View Report</span>
+                </button>
+            </div>
+
+            <!-- Stats Grid -->
+            <div class="stats-grid">
+                <div class="stat-card income">
+                    <div class="stat-icon">💰</div>
+                    <div class="stat-info">
+                        <span class="stat-label">Total Income</span>
+                        <span class="stat-value" id="totalIncome">0.00</span>
+                        <span class="stat-change" id="incomeChange">+0%</span>
+                    </div>
+                </div>
+                <div class="stat-card expense">
+                    <div class="stat-icon">💸</div>
+                    <div class="stat-info">
+                        <span class="stat-label">Total Expenses</span>
+                        <span class="stat-value" id="totalExpense">0.00</span>
+                        <span class="stat-change" id="expenseChange">+0%</span>
+                    </div>
+                </div>
+                <div class="stat-card savings">
+                    <div class="stat-icon">🎯</div>
+                    <div class="stat-info">
+                        <span class="stat-label">Net Savings</span>
+                        <span class="stat-value" id="netSavings">0.00</span>
+                        <span class="stat-change" id="savingsChange">+0%</span>
+                    </div>
+                </div>
+                <div class="stat-card subscriptions">
+                    <div class="stat-icon">🔄</div>
+                    <div class="stat-info">
+                        <span class="stat-label">Active Subscriptions</span>
+                        <span class="stat-value" id="activeSubscriptions">0</span>
+                        <span class="stat-change" id="subscriptionCost">0.00/mo</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Top AI Insights Preview -->
+            <div class="insights-preview" id="insightsPreview">
+                <h3>🤖 AI Insights</h3>
+                <div id="topInsights">
+                    <p style="text-align:center; color:var(--text-secondary);">Loading insights...</p>
+                </div>
+            </div>
+
+            <!-- Charts Row -->
+            <div class="charts-row">
+                <div class="chart-container">
+                    <h3>Monthly Trend</h3>
+                    <canvas id="trendChart"></canvas>
+                </div>
+                <div class="chart-container">
+                    <h3>Expense Distribution</h3>
+                    <canvas id="expenseChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Recent Activity -->
+            <div class="recent-activity">
+                <div class="section-header">
+                    <h3>Recent Transactions</h3>
+                    <button class="btn-link" data-goto="transactions">View All →</button>
+                </div>
+                <div id="recentTransactions">
+                    <p style="text-align:center; color:var(--text-secondary); padding:2rem;">No transactions yet</p>
+                </div>
+            </div>
+
+            <!-- Upcoming Items -->
+            <div class="upcoming-items">
+                <div class="section-header">
+                    <h3>Upcoming & Due</h3>
+                </div>
+                <div class="upcoming-grid">
+                    <div class="upcoming-section">
+                        <h4>📅 Bills Due Soon</h4>
+                        <div id="upcomingBillsPreview">
+                            <p style="text-align:center; color:var(--text-secondary);">No upcoming bills</p>
+                        </div>
+                    </div>
+                    <div class="upcoming-section">
+                        <h4>🔄 Subscription Renewals</h4>
+                        <div id="upcomingSubscriptionsPreview">
+                            <p style="text-align:center; color:var(--text-secondary);">No upcoming renewals</p>
+                        </div>
+                    </div>
+                    <div class="upcoming-section">
+                        <h4>⏰ Warranty Expiring</h4>
+                        <div id="expiringWarrantiesPreview">
+                            <p style="text-align:center; color:var(--text-secondary);">No expiring warranties</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Transactions Tab -->
+        <section id="transactions" class="tab-content">
+            <div class="action-bar">
+                <button id="addTransactionBtn" class="btn btn-primary">➕ Add Transaction</button>
+                <div class="filter-group">
+                    <input type="date" id="filterStartDate" class="date-input">
+                    <input type="date" id="filterEndDate" class="date-input">
+                    <select id="filterType" class="select-input">
+                        <option value="">All Types</option>
+                        <option value="income">Income</option>
+                        <option value="expense">Expense</option>
+                    </select>
+                    <select id="filterCategory" class="select-input">
+                        <option value="">All Categories</option>
+                    </select>
+                    <select id="filterAccount" class="select-input">
+                        <option value="">All Accounts</option>
+                        <option value="cash">Cash</option>
+                        <option value="bank">Bank</option>
+                    </select>
+                    <button id="applyFilterBtn" class="btn btn-secondary">Filter</button>
+                    <button id="clearFilterBtn" class="btn btn-ghost">Clear</button>
+                </div>
+            </div>
+            <div class="table-container">
+                <table class="transaction-table">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Type</th>
+                            <th>Category</th>
+                            <th>Description</th>
+                            <th>Amount</th>
+                            <th>Account</th>
+                            <th>Receipt</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="transactionsList">
+                        <tr>
+                            <td colspan="8" style="text-align:center; padding:2rem;">No transactions yet</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- Analytics Tab -->
+        <section id="analytics" class="tab-content">
+            <div class="analytics-container">
+                <div class="analytics-controls">
+                    <select id="analyticsTimeRange" class="select-input">
+                        <option value="thisMonth">This Month</option>
+                        <option value="lastMonth">Last Month</option>
+                        <option value="last3Months">Last 3 Months</option>
+                        <option value="last6Months">Last 6 Months</option>
+                        <option value="thisYear">This Year</option>
+                        <option value="lastYear">Last Year</option>
+                        <option value="custom">Custom Range</option>
+                    </select>
+                    <input type="date" id="analyticsStartDate" class="date-input" style="display:none;">
+                    <input type="date" id="analyticsEndDate" class="date-input" style="display:none;">
+                    <button id="generateAnalyticsBtn" class="btn btn-primary">Generate Report</button>
+                    <button id="exportAnalyticsBtn" class="btn btn-secondary">📊 Export PDF</button>
+                </div>
+
+                <!-- Analytics Summary Cards -->
+                <div class="analytics-summary">
+                    <div class="summary-card">
+                        <h4>Total Transactions</h4>
+                        <div class="summary-value" id="analyticsTransactionCount">0</div>
+                    </div>
+                    <div class="summary-card">
+                        <h4>Average Daily Spend</h4>
+                        <div class="summary-value" id="analyticsAvgDaily">0.00</div>
+                    </div>
+                    <div class="summary-card">
+                        <h4>Highest Expense</h4>
+                        <div class="summary-value" id="analyticsHighestExpense">0.00</div>
+                    </div>
+                    <div class="summary-card">
+                        <h4>Savings Rate</h4>
+                        <div class="summary-value" id="analyticsSavingsRate">0%</div>
+                    </div>
+                </div>
+
+                <!-- Advanced Charts -->
+                <div class="analytics-charts">
+                    <div class="chart-box full-width">
+                        <h4>Income vs Expense Trend</h4>
+                        <canvas id="incomeExpenseTrendChart"></canvas>
+                    </div>
+                    
+                    <div class="chart-box">
+                        <h4>Category Breakdown</h4>
+                        <canvas id="categoryPieChart"></canvas>
+                    </div>
+                    
+                    <div class="chart-box">
+                        <h4>Daily Spending Pattern</h4>
+                        <canvas id="dailyPatternChart"></canvas>
+                    </div>
+                    
+                    <div class="chart-box">
+                        <h4>Top Categories</h4>
+                        <canvas id="topCategoriesChart"></canvas>
+                    </div>
+                    
+                    <div class="chart-box">
+                        <h4>Monthly Comparison</h4>
+                        <canvas id="monthlyComparisonChart"></canvas>
+                    </div>
+
+                    <div class="chart-box">
+                        <h4>Account Distribution</h4>
+                        <canvas id="accountDistributionChart"></canvas>
+                    </div>
+
+                    <div class="chart-box">
+                        <h4>Expense Growth Rate</h4>
+                        <canvas id="growthRateChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Detailed Analytics Table -->
+                <div class="analytics-table">
+                    <h3>Detailed Breakdown</h3>
+                    <div id="analyticsTableContainer">
+                        <p style="text-align:center; color:var(--text-secondary); padding:2rem;">Generate a report to see details</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Shopping List Tab -->
+        <section id="shopping" class="tab-content">
+            <div class="shopping-container">
+                <div class="quick-add-card">
+                    <h3>Quick Add Item</h3>
+                    <form id="quickShoppingForm" class="quick-add-form">
+                        <input type="text" id="quickItemName" placeholder="Item name" class="input" required>
+                        <input type="number" id="quickItemQuantity" placeholder="Qty" class="input" value="1" min="1">
+                        <input type="number" id="quickItemPrice" placeholder="Price" class="input" step="0.01">
+                        <button type="submit" class="btn btn-primary">➕ Add</button>
+                    </form>
+                </div>
+
+                <div class="action-bar">
+                    <button id="createShoppingListBtn" class="btn btn-primary">📝 New List</button>
+                    <button id="importShoppingListBtn" class="btn btn-secondary">📥 Import</button>
+                    <button id="exportShoppingListBtn" class="btn btn-secondary">📤 Export</button>
+                    <select id="shoppingListFilter" class="select-input">
+                        <option value="all">All Lists</option>
+                        <option value="active">Active</option>
+                        <option value="completed">Completed</option>
+                    </select>
+                </div>
+
+                <div class="shopping-stats">
+                    <div class="stat-card">
+                        <span class="stat-label">Total Items</span>
+                        <span class="stat-value" id="totalShoppingItems">0</span>
+                    </div>
+                    <div class="stat-card">
+                        <span class="stat-label">Purchased</span>
+                        <span class="stat-value" id="purchasedItems">0</span>
+                    </div>
+                    <div class="stat-card">
+                        <span class="stat-label">Estimated</span>
+                        <span class="stat-value" id="estimatedTotal">0.00</span>
+                    </div>
+                    <div class="stat-card">
+                        <span class="stat-label">Spent</span>
+                        <span class="stat-value" id="actualSpent">0.00</span>
+                    </div>
+                </div>
+
+                <div class="shopping-lists-grid" id="shoppingListsContainer">
+                    <p style="text-align:center; color:var(--text-secondary); padding:2rem;">No shopping lists yet</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Subscriptions Tab -->
+        <section id="subscriptions" class="tab-content">
+            <div class="subscriptions-container">
+                <div class="action-bar">
+                    <button id="addSubscriptionBtn" class="btn btn-primary">➕ Add Subscription</button>
+                    <button id="importSubscriptionsBtn" class="btn btn-secondary">📥 Import</button>
+                    <button id="exportSubscriptionsBtn" class="btn btn-secondary">📤 Export</button>
+                </div>
+
+                <!-- Subscription Summary -->
+                <div class="subscription-summary">
+                    <div class="summary-card active">
+                        <h4>Active Subscriptions</h4>
+                        <div class="summary-value" id="activeSubCount">0</div>
+                    </div>
+                    <div class="summary-card monthly">
+                        <h4>Monthly Cost</h4>
+                        <div class="summary-value" id="monthlySubCost">0.00</div>
+                    </div>
+                    <div class="summary-card yearly">
+                        <h4>Yearly Cost</h4>
+                        <div class="summary-value" id="yearlySubCost">0.00</div>
+                    </div>
+                    <div class="summary-card upcoming">
+                        <h4>Due This Month</h4>
+                        <div class="summary-value" id="upcomingSubRenewals">0</div>
+                    </div>
+                </div>
+
+                <!-- Popular Subscription Templates -->
+                <div class="subscription-templates">
+                    <h3>Popular Services</h3>
+                    <div class="templates-grid">
+                        <div class="template-btn" data-template="Netflix">
+                            <span class="template-icon">🎬</span>
+                            <span>Netflix</span>
+                        </div>
+                        <div class="template-btn" data-template="Spotify">
+                            <span class="template-icon">🎵</span>
+                            <span>Spotify</span>
+                        </div>
+                        <div class="template-btn" data-template="Amazon Prime">
+                            <span class="template-icon">📦</span>
+                            <span>Prime</span>
+                        </div>
+                        <div class="template-btn" data-template="YouTube Premium">
+                            <span class="template-icon">📺</span>
+                            <span>YouTube</span>
+                        </div>
+                        <div class="template-btn" data-template="Disney+">
+                            <span class="template-icon">🏰</span>
+                            <span>Disney+</span>
+                        </div>
+                        <div class="template-btn" data-template="iCloud">
+                            <span class="template-icon">☁️</span>
+                            <span>iCloud</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Subscriptions List -->
+                <div class="subscriptions-list" id="subscriptionsList">
+                    <p style="text-align:center; color:var(--text-secondary); padding:2rem;">No subscriptions yet</p>
+                </div>
+
+                <!-- Calendar View -->
+                <div class="subscription-calendar">
+                    <h3>Renewal Calendar</h3>
+                    <div id="subscriptionCalendar">
+                        <p style="text-align:center; color:var(--text-secondary);">No upcoming renewals</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Wishlist Tab -->
+        <section id="wishlist" class="tab-content">
+            <div class="wishlist-container">
+                <div class="action-bar">
+                    <button id="addWishlistBtn" class="btn btn-primary">⭐ Add to Wishlist</button>
+                    <button id="importWishlistBtn" class="btn btn-secondary">📥 Import</button>
+                    <button id="exportWishlistBtn" class="btn btn-secondary">📤 Export</button>
+                    <select id="wishlistSortBy" class="select-input">
+                        <option value="priority">Sort by Priority</option>
+                        <option value="price">Sort by Price</option>
+                        <option value="date">Sort by Date</option>
+                        <option value="category">Sort by Category</option>
+                    </select>
+                </div>
+
+                <!-- Wishlist Stats -->
+                <div class="wishlist-stats">
+                    <div class="stat-card">
+                        <span class="stat-label">Total Items</span>
+                        <span class="stat-value" id="totalWishlistItems">0</span>
+                    </div>
+                    <div class="stat-card">
+                        <span class="stat-label">Total Value</span>
+                        <span class="stat-value" id="totalWishlistValue">0.00</span>
+                    </div>
+                    <div class="stat-card">
+                        <span class="stat-label">Saved Amount</span>
+                        <span class="stat-value" id="wishlistSavedAmount">0.00</span>
+                    </div>
+                    <div class="stat-card">
+                        <span class="stat-label">Purchased</span>
+                        <span class="stat-value" id="purchasedWishlistItems">0</span>
+                    </div>
+                </div>
+
+                <!-- Wishlist Grid -->
+                <div class="wishlist-grid" id="wishlistGrid">
+                    <p style="text-align:center; color:var(--text-secondary); padding:2rem;">No wishlist items yet</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Documents & Warranties Tab -->
+        <section id="documents" class="tab-content">
+            <div class="documents-container">
+                <div class="action-bar">
+                    <button id="addDocumentBtn" class="btn btn-primary">📄 Add Document</button>
+                    <button id="addWarrantyBtn" class="btn btn-primary">🛡️ Add Warranty</button>
+                    <select id="documentFilter" class="select-input">
+                        <option value="all">All Documents</option>
+                        <option value="receipt">Receipts</option>
+                        <option value="warranty">Warranties</option>
+                        <option value="insurance">Insurance</option>
+                        <option value="contract">Contracts</option>
+                        <option value="other">Other</option>
+                    </select>
+                    <input type="text" id="documentSearch" class="input" placeholder="🔍 Search documents...">
+                </div>
+
+                <!-- Document Stats -->
+                <div class="document-stats">
+                    <div class="stat-card">
+                        <span class="stat-label">Total Documents</span>
+                        <span class="stat-value" id="totalDocuments">0</span>
+                    </div>
+                    <div class="stat-card">
+                        <span class="stat-label">Active Warranties</span>
+                        <span class="stat-value" id="activeWarranties">0</span>
+                    </div>
+                    <div class="stat-card">
+                        <span class="stat-label">Expiring Soon</span>
+                        <span class="stat-value" id="expiringSoon">0</span>
+                    </div>
+                    <div class="stat-card">
+                        <span class="stat-label">Storage Used</span>
+                        <span class="stat-value" id="storageUsed">0 MB</span>
+                    </div>
+                </div>
+
+                <!-- Documents Grid -->
+                <div class="documents-grid" id="documentsGrid">
+                    <p style="text-align:center; color:var(--text-secondary); padding:2rem;">No documents yet</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- AI Insights Tab -->
+        <section id="insights" class="tab-content">
+            <div class="insights-container">
+                <div class="insights-header">
+                    <h2>🤖 AI-Powered Financial Insights</h2>
+                    <button id="refreshInsightsBtn" class="btn btn-primary">🔄 Refresh Insights</button>
+                </div>
+
+                <!-- Insight Categories -->
+                <div class="insight-categories">
+                    <button class="category-btn active" data-category="all">All Insights</button>
+                    <button class="category-btn" data-category="spending">💸 Spending</button>
+                    <button class="category-btn" data-category="savings">💰 Savings</button>
+                    <button class="category-btn" data-category="warnings">⚠️ Warnings</button>
+                    <button class="category-btn" data-category="tips">💡 Tips</button>
+                    <button class="category-btn" data-category="achievements">🏆 Achievements</button>
+                </div>
+
+                <!-- Insights List -->
+                <div class="insights-list" id="insightsList">
+                    <p style="text-align:center; color:var(--text-secondary); padding:3rem;">Loading insights...</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- More Tab (Settings, etc.) -->
+        <section id="more" class="tab-content">
+            <div class="settings-container">
+                <div class="settings-grid">
+                    
+                    <!-- Quick Links -->
+                    <div class="settings-card">
+                        <h3>⚡ Quick Access</h3>
+                        <div class="settings-menu">
+                            <button class="menu-item" data-goto="transactions">
+                                <span>💸</span> Manage Transactions
+                            </button>
+                            <button class="menu-item" data-goto="analytics">
+                                <span>📊</span> View Analytics
+                            </button>
+                            <button class="menu-item" id="scanMenuBtn">
+                                <span>📸</span> Scan Receipt
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Categories -->
+                    <div class="settings-card">
+                        <h3>📁 Manage Categories</h3>
+                        <div class="category-manager">
+                            <div class="form-group" style="display: flex; gap: 0.5rem;">
+                                <input type="text" id="newCategoryName" placeholder="Category Name" class="input">
+                                <select id="newCategoryType" class="input">
+                                    <option value="expense">Expense</option>
+                                    <option value="income">Income</option>
+                                </select>
+                                <input type="text" id="newCategoryIcon" placeholder="Icon" class="input" maxlength="2">
+                                <button id="addCategoryBtn" class="btn btn-primary">Add</button>
+                            </div>
+                            <div id="categoriesList" class="categories-list">
+                                <p style="text-align:center; color:var(--text-secondary);">Loading categories...</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Currency -->
+                    <div class="settings-card">
+                        <h3>💱 Currency Settings</h3>
+                        <div id="currencyList" class="currency-list">
+                            <p style="text-align:center; color:var(--text-secondary);">Loading currencies...</p>
+                        </div>
+                    </div>
+
+                    <!-- Import/Export -->
+                    <div class="settings-card">
+                        <h3>📥📤 Backup & Restore</h3>
+                        <div class="import-export-actions">
+                            <h4>Export Data</h4>
+                            <div class="btn-group">
+                                <button id="exportJSONBtn" class="btn btn-secondary">JSON</button>
+                                <button id="exportCSVBtn" class="btn btn-secondary">CSV</button>
+                                <button id="exportExcelBtn" class="btn btn-secondary">Excel</button>
+                                <button id="exportFullBackupBtn" class="btn btn-success">Full Backup</button>
+                            </div>
+                            
+                            <h4>Import Data</h4>
+                            <div class="file-input-wrapper">
+                                <input type="file" id="importFile" accept=".json,.csv,.xlsx,.xls" class="file-input">
+                                <label for="importFile" class="btn btn-primary">Choose File</label>
+                                <span id="fileName">No file chosen</span>
+                            </div>
+                            <button id="importBtn" class="btn btn-success" disabled>Import Data</button>
+                        </div>
+                    </div>
+
+                    <!-- App Settings -->
+                    <div class="settings-card">
+                        <h3>⚙️ App Settings</h3>
+                        <div class="settings-options">
+                            <label class="setting-item">
+                                <input type="checkbox" id="darkModeToggle">
+                                <span>🌙 Dark Mode</span>
+                            </label>
+                            <label class="setting-item">
+                                <input type="checkbox" id="notificationsToggle" checked>
+                                <span>🔔 Enable Notifications</span>
+                            </label>
+                            <label class="setting-item">
+                                <input type="checkbox" id="autoBackupToggle">
+                                <span>💾 Auto Backup (Weekly)</span>
+                            </label>
+                            <label class="setting-item">
+                                <input type="checkbox" id="insightsToggle" checked>
+                                <span>🤖 AI Insights</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- About -->
+                    <div class="settings-card app-info">
+                        <h3>ℹ️ About</h3>
+                        <div class="app-details">
+                            <p><strong>Expense Tracker Pro</strong></p>
+                            <p>Version 2.0.0</p>
+                            <p class="designer-credit">
+                                <span class="sparkle">✨</span>
+                                Designed & Developed by <strong>Santosh</strong>
+                                <span class="sparkle">✨</span>
+                            </p>
+                            <div class="feature-tags">
+                                <span class="tag">📸 OCR Scanner</span>
+                                <span class="tag">📊 Analytics</span>
+                                <span class="tag">🤖 AI Insights</span>
+                                <span class="tag">🔄 Subscriptions</span>
+                                <span class="tag">⭐ Wishlist</span>
+                                <span class="tag">📋 Documents</span>
+                            </div>
+                            <button id="clearDataBtn" class="btn btn-danger btn-block">🗑️ Clear All Data</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Modals -->
+    
+    <!-- Receipt Scanner Modal -->
+    <div id="receiptScannerModal" class="modal">
+        <div class="modal-content large">
+            <div class="modal-header">
+                <h2>📸 Receipt Scanner</h2>
+                <button class="close-btn" data-modal="receiptScannerModal">&times;</button>
+            </div>
+            <div class="scanner-container">
+                <div class="scanner-input">
+                    <label for="receiptImageInput" class="upload-area">
+                        <div class="upload-icon">📷</div>
+                        <p>Click to capture or upload receipt</p>
+                        <input type="file" id="receiptImageInput" accept="image/*" capture="environment" hidden>
+                    </label>
+                    <div id="receiptPreview" class="receipt-preview"></div>
+                </div>
+                <div class="scanner-output">
+                    <div class="scanner-status" id="scannerStatus">
+                        <div class="status-icon">⏳</div>
+                        <p>Waiting for image...</p>
+                    </div>
+                    <div id="scannedData" class="scanned-data"></div>
+                    <div class="scanner-actions" id="scannerActions" style="display:none;">
+                        <button id="confirmScanBtn" class="btn btn-success">✓ Create Transaction</button>
+                        <button id="editScanBtn" class="btn btn-secondary">✏️ Edit Details</button>
+                        <button id="rescanBtn" class="btn btn-ghost">🔄 Scan Again</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Transaction Modal -->
+    <div id="transactionModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="transactionModalTitle">Add Transaction</h2>
+                <button class="close-btn" data-modal="transactionModal">&times;</button>
+            </div>
+            <form id="transactionForm">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Date</label>
+                        <input type="date" id="txnDate" required class="input">
+                    </div>
+                    <div class="form-group">
+                        <label>Time (Optional)</label>
+                        <input type="time" id="txnTime" class="input">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Type</label>
+                    <div class="radio-group">
+                        <label class="radio-label">
+                            <input type="radio" name="txnType" value="expense" checked>
+                            <span class="radio-btn">💸 Expense</span>
+                        </label>
+                        <label class="radio-label">
+                            <input type="radio" name="txnType" value="income">
+                            <span class="radio-btn">💰 Income</span>
+                        </label>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Category</label>
+                    <select id="txnCategory" required class="input"></select>
+                </div>
+                <div class="form-group">
+                    <label>Description</label>
+                    <input type="text" id="txnDescription" required class="input" placeholder="What was this for?">
+                </div>
+                <div class="form-group">
+                    <label>Amount</label>
+                    <input type="number" id="txnAmount" required step="0.01" class="input" placeholder="0.00">
+                </div>
+                <div class="form-group">
+                    <label>Account</label>
+                    <div class="radio-group">
+                        <label class="radio-label">
+                            <input type="radio" name="txnAccount" value="cash" checked>
+                            <span class="radio-btn">💵 Cash</span>
+                        </label>
+                        <label class="radio-label">
+                            <input type="radio" name="txnAccount" value="bank">
+                            <span class="radio-btn">🏦 Bank</span>
+                        </label>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Notes (Optional)</label>
+                    <textarea id="txnNotes" class="input" rows="2" placeholder="Additional details..."></textarea>
+                </div>
+                <div class="form-group">
+                    <label>Attach Receipt (Optional)</label>
+                    <input type="file" id="txnReceipt" accept="image/*,.pdf" class="input">
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn btn-ghost close-btn" data-modal="transactionModal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save Transaction</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Subscription Modal -->
+    <div id="subscriptionModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="subscriptionModalTitle">Add Subscription</h2>
+                <button class="close-btn" data-modal="subscriptionModal">&times;</button>
+            </div>
+            <form id="subscriptionForm">
+                <div class="form-group">
+                    <label>Service Name</label>
+                    <input type="text" id="subName" required class="input" placeholder="e.g., Netflix">
+                </div>
+                <div class="form-group">
+                    <label>Category</label>
+                    <select id="subCategory" class="input">
+                        <option value="streaming">🎬 Streaming</option>
+                        <option value="music">🎵 Music</option>
+                        <option value="cloud">☁️ Cloud Storage</option>
+                        <option value="software">💻 Software</option>
+                        <option value="gaming">🎮 Gaming</option>
+                        <option value="news">📰 News & Media</option>
+                        <option value="fitness">💪 Fitness</option>
+                        <option value="other">📦 Other</option>
+                    </select>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Amount</label>
+                        <input type="number" id="subAmount" required step="0.01" class="input">
+                    </div>
+                    <div class="form-group">
+                        <label>Billing Cycle</label>
+                        <select id="subCycle" class="input">
+                            <option value="monthly">Monthly</option>
+                            <option value="quarterly">Quarterly</option>
+                            <option value="yearly">Yearly</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Next Billing Date</label>
+                    <input type="date" id="subNextBilling" required class="input">
+                </div>
+                <div class="form-group">
+                    <label>Account Email</label>
+                    <input type="email" id="subEmail" class="input" placeholder="account@email.com">
+                </div>
+                <div class="form-group">
+                    <label>Website/URL</label>
+                    <input type="url" id="subUrl" class="input" placeholder="https://...">
+                </div>
+                <div class="form-group">
+                    <label>Notes</label>
+                    <textarea id="subNotes" class="input" rows="2" placeholder="Plan details, etc."></textarea>
+                </div>
+                <div class="form-group">
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="subAutoRenew" checked>
+                        Auto-renewal enabled
+                    </label>
+                </div>
+                <div class="form-group">
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="subReminder" checked>
+                        Remind me before renewal (3 days)
+                    </label>
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn btn-ghost close-btn" data-modal="subscriptionModal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save Subscription</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Wishlist Modal -->
+    <div id="wishlistModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="wishlistModalTitle">Add to Wishlist</h2>
+                <button class="close-btn" data-modal="wishlistModal">&times;</button>
+            </div>
+            <form id="wishlistForm">
+                <div class="form-group">
+                    <label>Item Name</label>
+                    <input type="text" id="wishItemName" required class="input" placeholder="What do you want?">
+                </div>
+                <div class="form-group">
+                    <label>Category</label>
+                    <select id="wishCategory" class="input">
+                        <option value="electronics">💻 Electronics</option>
+                        <option value="clothing">👕 Clothing</option>
+                        <option value="books">📚 Books</option>
+                        <option value="home">🏠 Home & Garden</option>
+                        <option value="sports">⚽ Sports</option>
+                        <option value="travel">✈️ Travel</option>
+                        <option value="other">📦 Other</option>
+                    </select>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Price</label>
+                        <input type="number" id="wishPrice" required step="0.01" class="input">
+                    </div>
+                    <div class="form-group">
+                        <label>Priority</label>
+                        <select id="wishPriority" class="input">
+                            <option value="low">Low</option>
+                            <option value="medium">Medium</option>
+                            <option value="high">High</option>
+                            <option value="urgent">Urgent</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Link/URL</label>
+                    <input type="url" id="wishUrl" class="input" placeholder="https://...">
+                </div>
+                <div class="form-group">
+                    <label>Image URL (Optional)</label>
+                    <input type="url" id="wishImageUrl" class="input" placeholder="https://...">
+                </div>
+                <div class="form-group">
+                    <label>Or Upload Image</label>
+                    <input type="file" id="wishImage" accept="image/*" class="input">
+                </div>
+                <div class="form-group">
+                    <label>Target Date</label>
+                    <input type="date" id="wishTargetDate" class="input">
+                </div>
+                <div class="form-group">
+                    <label>Notes</label>
+                    <textarea id="wishNotes" class="input" rows="2" placeholder="Why do you want this?"></textarea>
+                </div>
+                <div class="form-group">
+                    <label>Current Savings Towards This</label>
+                    <input type="number" id="wishSavedAmount" step="0.01" class="input" value="0">
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn btn-ghost close-btn" data-modal="wishlistModal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Add to Wishlist</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Document/Warranty Modal -->
+    <div id="documentModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="documentModalTitle">Add Document</h2>
+                <button class="close-btn" data-modal="documentModal">&times;</button>
+            </div>
+            <form id="documentForm">
+                <div class="form-group">
+                    <label>Document Type</label>
+                    <select id="docType" class="input">
+                        <option value="receipt">📄 Receipt</option>
+                        <option value="warranty">🛡️ Warranty</option>
+                        <option value="insurance">🏥 Insurance</option>
+                        <option value="contract">📋 Contract</option>
+                        <option value="manual">📖 Manual</option>
+                        <option value="other">📦 Other</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Title</label>
+                    <input type="text" id="docTitle" required class="input" placeholder="Document name">
+                </div>
+                <div class="form-group">
+                    <label>Product/Item Name</label>
+                    <input type="text" id="docProduct" class="input" placeholder="What is this for?">
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Purchase Date</label>
+                        <input type="date" id="docPurchaseDate" class="input">
+                    </div>
+                    <div class="form-group">
+                        <label>Expiry Date</label>
+                        <input type="date" id="docExpiryDate" class="input">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Amount/Value</label>
+                    <input type="number" id="docAmount" step="0.01" class="input">
+                </div>
+                <div class="form-group">
+                    <label>Store/Company</label>
+                    <input type="text" id="docCompany" class="input" placeholder="Where purchased">
+                </div>
+                <div class="form-group">
+                    <label>Upload File</label>
+                    <input type="file" id="docFile" accept="image/*,.pdf" required class="input">
+                </div>
+                <div class="form-group">
+                    <label>Notes</label>
+                    <textarea id="docNotes" class="input" rows="2"></textarea>
+                </div>
+                <div class="form-group">
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="docReminder">
+                        Remind me before expiry
+                    </label>
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn btn-ghost close-btn" data-modal="documentModal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save Document</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Shopping List Modal -->
+    <div id="shoppingListModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="shoppingListModalTitle">Create Shopping List</h2>
+                <button class="close-btn" data-modal="shoppingListModal">&times;</button>
+            </div>
+            <form id="shoppingListForm">
+                <div class="form-group">
+                    <label>List Name</label>
+                    <input type="text" id="listName" required class="input" placeholder="e.g., Weekly Groceries">
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Date</label>
+                        <input type="date" id="listDate" required class="input">
+                    </div>
+                    <div class="form-group">
+                        <label>Store</label>
+                        <input type="text" id="listStore" class="input" placeholder="Where">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Category</label>
+                        <select id="listCategory" class="input">
+                            <option value="groceries">🛒 Groceries</option>
+                            <option value="household">🏠 Household</option>
+                            <option value="electronics">💻 Electronics</option>
+                            <option value="clothing">👕 Clothing</option>
+                            <option value="pharmacy">💊 Pharmacy</option>
+                            <option value="other">📦 Other</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Budget</label>
+                        <input type="number" id="listBudget" class="input" step="0.01">
+                    </div>
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn btn-ghost close-btn" data-modal="shoppingListModal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Create List</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Shopping Item Modal -->
+    <div id="shoppingItemModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="shoppingItemModalTitle">Add Item</h2>
+                <button class="close-btn" data-modal="shoppingItemModal">&times;</button>
+            </div>
+            <form id="shoppingItemForm">
+                <div class="form-group">
+                    <label>Item Name</label>
+                    <input type="text" id="itemName" required class="input">
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Quantity</label>
+                        <input type="number" id="itemQuantity" required class="input" value="1" min="1">
+                    </div>
+                    <div class="form-group">
+                        <label>Unit</label>
+                        <select id="itemUnit" class="input">
+                            <option value="pcs">Pieces</option>
+                            <option value="kg">Kg</option>
+                            <option value="g">Grams</option>
+                            <option value="l">Liters</option>
+                            <option value="ml">ML</option>
+                            <option value="pack">Pack</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Est. Price</label>
+                        <input type="number" id="itemEstPrice" class="input" step="0.01">
+                    </div>
+                    <div class="form-group">
+                        <label>Actual Price</label>
+                        <input type="number" id="itemActualPrice" class="input" step="0.01">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Category</label>
+                    <select id="itemCategory" class="input">
+                        <option value="vegetables">🥕 Vegetables</option>
+                        <option value="fruits">🍎 Fruits</option>
+                        <option value="dairy">🥛 Dairy</option>
+                        <option value="meat">🍖 Meat</option>
+                        <option value="bakery">🍞 Bakery</option>
+                        <option value="snacks">🍿 Snacks</option>
+                        <option value="beverages">🥤 Beverages</option>
+                        <option value="cleaning">🧹 Cleaning</option>
+                        <option value="personal">🧴 Personal</option>
+                        <option value="other">📦 Other</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Notes</label>
+                    <textarea id="itemNotes" class="input" rows="2"></textarea>
+                </div>
+                <div class="form-group">
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="itemPriority">
+                        High Priority
+                    </label>
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn btn-ghost close-btn" data-modal="shoppingItemModal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save Item</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Currency Modal -->
+    <div id="currencyModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Add Currency</h2>
+                <button class="close-btn" data-modal="currencyModal">&times;</button>
+            </div>
+            <form id="currencyForm">
+                <div class="form-group">
+                    <label>Currency Code</label>
+                    <input type="text" id="currencyCode" required class="input" placeholder="e.g., EUR" maxlength="3">
+                </div>
+                <div class="form-group">
+                    <label>Currency Name</label>
+                    <input type="text" id="currencyName" required class="input" placeholder="e.g., Euro">
+                </div>
+                <div class="form-group">
+                    <label>Symbol</label>
+                    <input type="text" id="currencySymbol" required class="input" placeholder="e.g., €" maxlength="3">
+                </div>
+                <div class="form-group">
+                    <label>Exchange Rate (to NPR)</label>
+                    <input type="number" id="currencyRate" required step="0.0001" class="input" placeholder="e.g., 157.50">
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn btn-ghost close-btn" data-modal="currencyModal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Add Currency</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Notification Panel -->
+    <div id="notificationPanel" class="notification-panel">
+        <div class="notification-header">
+            <h3>🔔 Notifications</h3>
+            <button id="clearNotificationsBtn" class="btn-ghost">Clear All</button>
+        </div>
+        <div id="notificationsList" class="notifications-list">
+            <p style="text-align:center; padding:2rem; color:var(--text-secondary);">No notifications</p>
+        </div>
+    </div>
+
+    <!-- Toast Notifications -->
+    <div id="toastContainer" class="toast-container"></div>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <p>
+            <span class="sparkle">✨</span>
+            Designed & Developed by <strong>Santosh</strong>
+            <span class="sparkle">✨</span>
+        </p>
+        <p class="version">Expense Tracker Pro v2.0.0 | Full Featured Edition</p>
+    </footer>
+
+    <!-- Scripts - Load in order -->
+    <script src="js/database.js"></script>
+    <script src="js/scanner.js"></script>
+    <script src="js/analytics.js"></script>
+    <script src="js/insights.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>
