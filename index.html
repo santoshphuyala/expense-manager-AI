@@ -624,7 +624,105 @@
                             <button id="importBtn" class="btn btn-success" disabled>Import Data</button>
                         </div>
                     </div>
+                    
+                    
+<!-- Import Options Modal -->
+<div id="importOptionsModal" class="import-modal" style="display: none;">
+    <div class="import-modal-content">
+        <div class="import-modal-header">
+            <h2>📥 Import Preview</h2>
+            <button class="import-modal-close" onclick="app.closeImportOptionsDialog()">&times;</button>
+        </div>
 
+        <div class="import-modal-body">
+            <!-- Summary Section -->
+            <div class="import-summary">
+                <h3>Import Summary</h3>
+                <div class="import-stats">
+                    <div class="import-stat">
+                        <span class="stat-label">Total Records:</span>
+                        <span class="stat-value" id="importTotalCount">0</span>
+                    </div>
+                    <div class="import-stat success">
+                        <span class="stat-label">✅ Valid:</span>
+                        <span class="stat-value" id="importValidCount">0</span>
+                    </div>
+                    <div class="import-stat error">
+                        <span class="stat-label">❌ Invalid:</span>
+                        <span class="stat-value" id="importInvalidCount">0</span>
+                    </div>
+                    <div class="import-stat warning">
+                        <span class="stat-label">🔄 Duplicates:</span>
+                        <span class="stat-value" id="importDuplicateCount">0</span>
+                    </div>
+                    <div class="import-stat info">
+                        <span class="stat-label">✨ New:</span>
+                        <span class="stat-value" id="importNewCount">0</span>
+                    </div>
+                    <div class="import-stat">
+                        <span class="stat-label">📊 Existing Data:</span>
+                        <span class="stat-value" id="importExistingCount">0</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Errors Section -->
+            <div id="importErrorsSection" class="import-section import-errors" style="display: none;">
+                <h4>❌ Validation Errors</h4>
+                <ul id="importErrorsList"></ul>
+            </div>
+
+            <!-- Warnings Section -->
+            <div id="importWarningsSection" class="import-section import-warnings" style="display: none;">
+                <h4>⚠️ Warnings</h4>
+                <ul id="importWarningsList"></ul>
+            </div>
+
+            <!-- Options Section -->
+            <div class="import-options">
+                <h3>Choose Import Method:</h3>
+                
+                <div class="import-option-card" id="importOverwriteCard">
+                    <div class="import-option-icon">🔄</div>
+                    <h4>Overwrite All Data</h4>
+                    <p>Delete all existing records and replace with imported data</p>
+                    <button 
+                        id="importOverwriteBtn" 
+                        class="import-option-btn btn-danger"
+                        onclick="app.executeImport(app.pendingImportData.transactions, 'overwrite')"
+                    >
+                        ⚠️ Overwrite & Replace
+                    </button>
+                </div>
+
+                <div class="import-option-card" id="importMergeCard">
+                    <div class="import-option-icon">➕</div>
+                    <h4>Merge Data</h4>
+                    <p>Keep existing records and add only new ones (skip duplicates)</p>
+                    <button 
+                        id="importMergeBtn" 
+                        class="import-option-btn btn-success"
+                        onclick="app.executeImport(app.pendingImportData.transactions, 'merge')"
+                    >
+                        ✅ Merge & Add New
+                    </button>
+                </div>
+
+                <div class="import-option-card" id="importSkipCard">
+                    <div class="import-option-icon">❌</div>
+                    <h4>Cancel Import</h4>
+                    <p>Don't import anything and close this dialog</p>
+                    <button 
+                        class="import-option-btn btn-secondary"
+                        onclick="app.closeImportOptionsDialog()"
+                    >
+                        Cancel
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
                     <!-- App Settings -->
                     <div class="settings-card">
                         <h3>⚙️ App Settings</h3>
