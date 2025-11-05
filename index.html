@@ -7,9 +7,19 @@
     <title>Expense Tracker Pro</title>
     <link rel="manifest" href="manifest.json">
     <link rel="stylesheet" href="css/styles.css">
+<link rel="apple-touch-icon" sizes="180x180" href="icons/apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="icons/favicon-16x16.png">
+<link rel="manifest" href="icons/site.webmanifest">
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/tesseract.js@4/dist/tesseract.min.js"></script>
+<!-- Bootstrap 5 CSS -->
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+<!-- Bootstrap Icons -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+<!-- Bootstrap 5 JS (for accordion) -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </head>
 <body>
     <!-- Header -->
@@ -626,104 +636,163 @@
                     </div>
                     
                     
-<!-- Import Options Modal -->
-<div id="importOptionsModal" class="import-modal" style="display: none;">
-    <div class="import-modal-content">
-        <div class="import-modal-header">
-            <h2>📥 Import Preview</h2>
-            <button class="import-modal-close" onclick="app.closeImportOptionsDialog()">&times;</button>
+<!-- IMPORT OPTIONS MODAL - ENHANCED -->
+<div id="importOptionsModal" class="modal import-modal">
+    <div class="modal-content import-modal-content">
+        <div class="modal-header import-modal-header">
+            <h2>
+                <i class="fas fa-file-import"></i>
+                Import Preview
+            </h2>
+            <button class="close-btn" onclick="app.closeImportOptionsDialog()">
+                <i class="fas fa-times"></i>
+            </button>
         </div>
 
-        <div class="import-modal-body">
-            <!-- Summary Section -->
-            <div class="import-summary">
-                <h3>Import Summary</h3>
-                <div class="import-stats">
-                    <div class="import-stat">
-                        <span class="stat-label">Total Records:</span>
-                        <span class="stat-value" id="importTotalCount">0</span>
+        <div class="modal-body import-modal-body">
+            
+            <!-- STATISTICS GRID -->
+            <div class="import-stats-grid">
+                <div class="stat-card stat-total">
+                    <div class="stat-icon">
+                        <i class="fas fa-file-alt"></i>
                     </div>
-                    <div class="import-stat success">
-                        <span class="stat-label">✅ Valid:</span>
-                        <span class="stat-value" id="importValidCount">0</span>
+                    <div class="stat-info">
+                        <div class="stat-label">Total Records</div>
+                        <div class="stat-value" id="importTotalCount">0</div>
                     </div>
-                    <div class="import-stat error">
-                        <span class="stat-label">❌ Invalid:</span>
-                        <span class="stat-value" id="importInvalidCount">0</span>
+                </div>
+
+                <div class="stat-card stat-valid">
+                    <div class="stat-icon">
+                        <i class="fas fa-check-circle"></i>
                     </div>
-                    <div class="import-stat warning">
-                        <span class="stat-label">🔄 Duplicates:</span>
-                        <span class="stat-value" id="importDuplicateCount">0</span>
+                    <div class="stat-info">
+                        <div class="stat-label">Valid</div>
+                        <div class="stat-value" id="importValidCount">0</div>
                     </div>
-                    <div class="import-stat info">
-                        <span class="stat-label">✨ New:</span>
-                        <span class="stat-value" id="importNewCount">0</span>
+                </div>
+
+                <div class="stat-card stat-invalid">
+                    <div class="stat-icon">
+                        <i class="fas fa-exclamation-circle"></i>
                     </div>
-                    <div class="import-stat">
-                        <span class="stat-label">📊 Existing Data:</span>
-                        <span class="stat-value" id="importExistingCount">0</span>
+                    <div class="stat-info">
+                        <div class="stat-label">Invalid</div>
+                        <div class="stat-value" id="importInvalidCount">0</div>
+                    </div>
+                </div>
+
+                <div class="stat-card stat-new">
+                    <div class="stat-icon">
+                        <i class="fas fa-plus-circle"></i>
+                    </div>
+                    <div class="stat-info">
+                        <div class="stat-label">New Records</div>
+                        <div class="stat-value" id="importNewCount">0</div>
+                    </div>
+                </div>
+
+                <div class="stat-card stat-duplicate">
+                    <div class="stat-icon">
+                        <i class="fas fa-clone"></i>
+                    </div>
+                    <div class="stat-info">
+                        <div class="stat-label">Duplicates</div>
+                        <div class="stat-value" id="importDuplicateCount">0</div>
+                    </div>
+                </div>
+
+                <div class="stat-card stat-existing">
+                    <div class="stat-icon">
+                        <i class="fas fa-database"></i>
+                    </div>
+                    <div class="stat-info">
+                        <div class="stat-label">Existing Data</div>
+                        <div class="stat-value" id="importExistingCount">0</div>
                     </div>
                 </div>
             </div>
 
-            <!-- Errors Section -->
+            <!-- ERRORS SECTION -->
             <div id="importErrorsSection" class="import-section import-errors" style="display: none;">
-                <h4>❌ Validation Errors</h4>
-                <ul id="importErrorsList"></ul>
+                <div class="section-header error-header">
+                    <i class="fas fa-times-circle"></i>
+                    <h3>Validation Errors</h3>
+                </div>
+                <ul id="importErrorsList" class="import-list error-list"></ul>
             </div>
 
-            <!-- Warnings Section -->
+            <!-- WARNINGS SECTION -->
             <div id="importWarningsSection" class="import-section import-warnings" style="display: none;">
-                <h4>⚠️ Warnings</h4>
-                <ul id="importWarningsList"></ul>
+                <div class="section-header warning-header">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <h3>Warnings</h3>
+                </div>
+                <ul id="importWarningsList" class="import-list warning-list"></ul>
             </div>
 
-            <!-- Options Section -->
-            <div class="import-options">
-                <h3>Choose Import Method:</h3>
+            <!-- IMPORT OPTIONS -->
+            <div class="import-options-section">
+                <h3 class="options-title">
+                    <i class="fas fa-cog"></i>
+                    Choose Import Method
+                </h3>
                 
-                <div class="import-option-card" id="importOverwriteCard">
-                    <div class="import-option-icon">🔄</div>
-                    <h4>Overwrite All Data</h4>
-                    <p>Delete all existing records and replace with imported data</p>
-                    <button 
-                        id="importOverwriteBtn" 
-                        class="import-option-btn btn-danger"
-                        onclick="app.executeImport(app.pendingImportData.transactions, 'overwrite')"
-                    >
-                        ⚠️ Overwrite & Replace
+                <div class="import-buttons-grid">
+                    
+                    <!-- MERGE OPTION -->
+                    <button id="importMergeBtn" class="import-option-btn merge-btn" 
+                            onclick="app.executeImport(app.pendingImportData.transactions, 'merge')">
+                        <div class="btn-icon">
+                            <i class="fas fa-code-branch"></i>
+                        </div>
+                        <div class="btn-content">
+                            <div class="btn-title">Merge (Recommended)</div>
+                            <div class="btn-description">
+                                Add <strong id="mergeNewCount">0</strong> new records, 
+                                skip <strong id="mergeDupeCount">0</strong> duplicates
+                            </div>
+                        </div>
+                        <div class="btn-badge merge-badge">Safe</div>
                     </button>
-                </div>
 
-                <div class="import-option-card" id="importMergeCard">
-                    <div class="import-option-icon">➕</div>
-                    <h4>Merge Data</h4>
-                    <p>Keep existing records and add only new ones (skip duplicates)</p>
-                    <button 
-                        id="importMergeBtn" 
-                        class="import-option-btn btn-success"
-                        onclick="app.executeImport(app.pendingImportData.transactions, 'merge')"
-                    >
-                        ✅ Merge & Add New
+                    <!-- OVERWRITE OPTION -->
+                    <button id="importOverwriteBtn" class="import-option-btn overwrite-btn" 
+                            onclick="app.executeImport(app.pendingImportData.transactions, 'overwrite')">
+                        <div class="btn-icon">
+                            <i class="fas fa-sync-alt"></i>
+                        </div>
+                        <div class="btn-content">
+                            <div class="btn-title">Replace All</div>
+                            <div class="btn-description">
+                                Delete <strong id="overwriteDeleteCount">0</strong> existing, 
+                                import <strong id="overwriteImportCount">0</strong> new
+                            </div>
+                        </div>
+                        <div class="btn-badge danger-badge">Danger</div>
                     </button>
-                </div>
 
-                <div class="import-option-card" id="importSkipCard">
-                    <div class="import-option-icon">❌</div>
-                    <h4>Cancel Import</h4>
-                    <p>Don't import anything and close this dialog</p>
-                    <button 
-                        class="import-option-btn btn-secondary"
-                        onclick="app.closeImportOptionsDialog()"
-                    >
-                        Cancel
+                    <!-- CANCEL OPTION -->
+                    <button class="import-option-btn cancel-btn" 
+                            onclick="app.executeImport([], 'skip')">
+                        <div class="btn-icon">
+                            <i class="fas fa-ban"></i>
+                        </div>
+                        <div class="btn-content">
+                            <div class="btn-title">Cancel</div>
+                            <div class="btn-description">
+                                Don't import anything
+                            </div>
+                        </div>
                     </button>
+
                 </div>
             </div>
+
         </div>
     </div>
-</div>
-                    <!-- App Settings -->
+</div>                    <!-- App Settings -->
                     <div class="settings-card">
                         <h3>⚙️ App Settings</h3>
                         <div class="settings-options">
