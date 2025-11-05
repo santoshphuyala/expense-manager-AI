@@ -3458,18 +3458,149 @@ async fileToBase64(file) {
 } // <-- CLOSING BRACE FOR ExpenseTrackerApp CLASS
 
 // ==========================================
-// SERVICE WORKER REGISTRATION
+// SERVICE WORKER REGISTRATION - ENHANCED
 // ==========================================
 
 if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
         console.log('🔧 Registering Service Worker...');
-        navigator.serviceWorker.register('sw.js')
-            .then(reg => console.log('✅ Service Worker registered:', reg.scope))
-            .catch(err => console.error('❌ Service Worker failed:', err));
+        
+        navigator.serviceWorker.register('/sw.js') // ← Absolute path
+            .then(registration => {
+                console.log('✅ Service Worker registered:', registration.scope);
+                
+                // ✅ CHECK FOR UPDATES
+                registration.addEventListener('updatefound', () => {
+                    const newWorker = registration.installing;
+                    console.log('🔄 New Service Worker found!');
+                    
+                    newWorker.addEventListener('statechange', () => {
+                        if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                            console.log('📦 New version available!');
+                            
+                            // Show update notification to user
+                            if (typeof app !== 'undefined' && app.showToast) {
+                                app.showToast(
+                                    '🎉 New version available! Refresh to update.', 
+                                    'info',
+                                    10000 // Show for 10 seconds
+                                );
+                            }
+                        }
+                    });
+                });
+                
+                // ✅ CHECK FOR UPDATES PERIODICALLY (every hour)
+                setInterval(() => {
+                    registration.update()
+                        .then(() => console.log('🔍 Checked for Service Worker updates'))
+                        .catch(err => console.warn('⚠️ Update check failed:', err.message));
+                }, 60 * 60 * 1000); // 1 hour
+                
+            })
+            .catch(error => {
+                console.error('❌ Service Worker registration failed:', error.message);
+                console.error('Stack:', error.stack);
+            });
+        
+        // ✅ LISTEN FOR MESSAGES FROM SERVICE WORKER
+        navigator.serviceWorker.addEventListener('message', event => {
+            console.log('📨 Message from Service Worker:', event.data);
+            
+            if (event.data && event.data.type === 'SYNC_COMPLETE') {
+                if (typeof app !== 'undefined' && app.showToast) {
+                    app.showToast('✅ Data synced successfully!', 'success');
+                }
+            }
+        });
+        
+        // ✅ HANDLE CONTROLLER CHANGE (New SW activated)
+        navigator.serviceWorker.addEventListener('controllerchange', () => {
+            console.log('🔄 Service Worker controller changed');
+            
+            if (typeof app !== 'undefined' && app.showToast) {
+                app.showToast(
+                    '🔄 App updated! Reloading...', 
+                    'info',
+                    2000
+                );
+                
+                // Auto-reload after 2 seconds
+                setTimeout(() => {
+                    window.location.reload();
+                }, 2000);
+            }
+        });
     });
 }
 
+// ==========================================
+// OFFLINE/ONLINE DETECTION
+// ==========================================
+
+window.addEventListener('online', () => {
+    console.log('🌐 Back online!');
+    if (typeof app !== 'undefined' && app.showToast) {
+        app.showToast('🌐 Connection restored!', 'success');
+    }
+    
+    // Trigger sync if available
+    if ('serviceWorker' in navigator && 'sync' in window.ServiceWorkerRegistration.prototype) {
+        navigator.serviceWorker.ready.then(registration => {
+            return registration.sync.register('sync-transactions');
+        }).catch(err => {
+            console.warn('⚠️ Background sync failed:', err);
+        });
+    }
+});
+
+window.addEventListener('offline', () => {
+    console.log('📵 Gone offline!');
+    if (typeof app !== 'undefined' && app.showToast) {
+        app.showToast('📵 No internet connection. Working offline...', 'warning', 5000);
+    }
+});
+
+// ==========================================
+// HELPER: UNREGISTER SERVICE WORKER (for debugging)
+// ==========================================
+
+window.unregisterServiceWorker = async function() {
+    if ('serviceWorker' in navigator) {
+        const registrations = await navigator.serviceWorker.getRegistrations();
+        for (let registration of registrations) {
+            const unregistered = await registration.unregister();
+            console.log('🗑️ Service Worker unregistered:', unregistered);
+        }
+        
+        // Clear all caches
+        const cacheNames = await caches.keys();
+        for (let cacheName of cacheNames) {
+            await caches.delete(cacheName);
+            console.log('🗑️ Cache deleted:', cacheName);
+        }
+        
+        console.log('✅ All Service Workers and caches removed!');
+        console.log('🔄 Refresh the page to complete cleanup.');
+    }
+};
+
+// ==========================================
+// HELPER: FORCE UPDATE SERVICE WORKER
+// ==========================================
+
+window.updateServiceWorker = async function() {
+    if ('serviceWorker' in navigator) {
+        const registration = await navigator.serviceWorker.getRegistration();
+        if (registration) {
+            console.log('🔄 Checking for updates...');
+            await registration.update();
+            console.log('✅ Update check complete!');
+        }
+    }
+};
+
+console.log('📦 Service Worker registration script loaded');
 // ==========================================
 // INITIALIZE APP
 // ==========================================
