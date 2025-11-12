@@ -3461,13 +3461,50 @@ async fileToBase64(file) {
 // SERVICE WORKER REGISTRATION
 // ==========================================
 
-if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-        console.log('🔧 Registering Service Worker...');
-        navigator.serviceWorker.register('sw.js')
-            .then(reg => console.log('✅ Service Worker registered:', reg.scope))
-            .catch(err => console.error('❌ Service Worker failed:', err));
-    });
+// ✅ NEW CODE - Replace with:
+async function registerServiceWorker() {
+    if ('serviceWorker' in navigator) {
+        try {
+            console.log('🔧 Registering Service Worker...');
+            
+            // Get the correct base path for GitHub Pages
+            const basePath = window.location.hostname === 'localhost' 
+                ? '/' 
+                : '/expense-manager-AI/';
+            
+            const swPath = `${basePath}sw.js`;
+            
+            // Check if sw.js exists before registering
+            const swExists = await fetch(swPath, { method: 'HEAD' })
+                .then(res => res.ok)
+                .catch(() => false);
+            
+            if (!swExists) {
+                console.warn('⚠️ Service Worker file not found, skipping registration');
+                return;
+            }
+            
+            const registration = await navigator.serviceWorker.register(swPath);
+            console.log('✅ Service Worker registered:', registration.scope);
+            
+            registration.addEventListener('updatefound', () => {
+                const newWorker = registration.installing;
+                console.log('🔄 Service Worker update found');
+                
+                newWorker.addEventListener('statechange', () => {
+                    if (newWorker.state === 'activated') {
+                        console.log('✅ Service Worker activated');
+                    }
+                });
+            });
+            
+        } catch (error) {
+            console.warn('⚠️ Service Worker registration failed:', error.message);
+            // Don't show error to user, app works without SW
+        }
+    } else {
+        console.log('ℹ️ Service Workers not supported');
+    }
 }
 
 // ==========================================
