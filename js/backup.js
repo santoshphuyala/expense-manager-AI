@@ -1403,83 +1403,59 @@ function createDashboardBackupUI() {
 
 // ==================== AUTO-INJECTION ====================
 
-async function autoInjectExportButtons() {
-    try {
-        await backupManager.discoverAllStores();
+function autoInjectExportButtons() {
+    console.log('🔍 Starting auto-injection...');
+    
+    const stores = [
+        'bills', 'categories', 'currencies', 'documents', 'insights',
+        'notifications', 'receipts', 'recurring', 'settings',
+        'shopping_lists', 'shopping_templates', 'splits',
+        'subscriptions', 'transactions', 'wishlist'
+    ];
+
+    // Mapping of store names to section IDs
+    const sectionMap = {
+        'bills': '#bills-section',
+        'categories': '#categories-section',
+        'currencies': '#currencies-section',
+        'documents': '#documents-section',
+        'insights': '#insights-section',
+        'notifications': '#notifications-section',
+        'receipts': '#receipts-section',
+        'recurring': '#recurring-section',
+        'settings': '#settings-section',
+        'shopping_lists': '#shoppingList-section',
+        'shopping_templates': '#shopping-templates-section',
+        'splits': '#splits-section',
+        'subscriptions': '#subscriptions-section',
+        'transactions': '#transactions-section',
+        'wishlist': '#wishlist-section'
+    };
+
+    let successCount = 0;
+    let skippedCount = 0;
+
+    stores.forEach(store => {
+        const sectionId = sectionMap[store];
+        const section = document.querySelector(sectionId);
         
-        console.log('🔍 Starting auto-injection...');
-        
-        const dashboard = document.querySelector('#dashboard');
-        if (dashboard && !document.querySelector('.dashboard-backup-section')) {
-            const backupUI = createDashboardBackupUI();
-            const quickActions = dashboard.querySelector('.quick-actions');
-            if (quickActions) {
-                quickActions.after(backupUI);
+        if (section) {
+            // Only inject if section exists AND button doesn't already exist
+            const existingButton = section.querySelector('.export-backup-btn');
+            if (!existingButton) {
+                injectExportButton(store, sectionId);
+                console.log(`✅ Button added for ${store} at ${sectionId}`);
+                successCount++;
             } else {
-                dashboard.insertBefore(backupUI, dashboard.firstChild);
+                skippedCount++;
             }
-            console.log('✅ Dashboard UI added');
-            attachDashboardListeners();
+        } else {
+            // Silently skip if section doesn't exist (not an error, just not on this page)
+            skippedCount++;
         }
-        
-        const sectionMappings = {
-            'shopping_lists': ['#shopping-section', '#shopping-list-section', '#shoppingList-section'],
-            'shopping_templates': ['#shopping-templates-section', '#templates-section'],
-            'transactions': ['#transactions-section', '#transaction-section'],
-            'subscriptions': ['#subscriptions-section', '#subscription-section'],
-            'recurring': ['#recurring-section', '#recurring-transactions-section'],
-            'bills': ['#bills-section', '#bill-section'],
-            'categories': ['#categories-section', '#category-section'],
-            'wishlist': ['#wishlist-section', '#wish-list-section'],
-            'documents': ['#documents-section', '#document-section'],
-            'receipts': ['#receipts-section', '#receipt-section'],
-            'insights': ['#insights-section', '#insight-section'],
-            'notifications': ['#notifications-section', '#notification-section'],
-            'currencies': ['#currencies-section', '#currency-section'],
-            'settings': ['#settings-section', '#setting-section'],
-            'splits': ['#splits-section', '#split-section']
-        };
-        
-        for (const storeName of backupManager.detectedStores) {
-            const selectors = sectionMappings[storeName] || [`#${storeName}-section`];
-            let injected = false;
-            
-            for (const selector of selectors) {
-                const section = document.querySelector(selector);
-                
-                if (section && !section.querySelector('.module-export-buttons')) {
-                    const button = createModuleExportButton(storeName);
-                    
-                    const header = section.querySelector('.section-header, .module-header, header, .header');
-                    const actions = section.querySelector('.section-actions, .header-actions, .actions');
-                    
-                    if (actions) {
-                        actions.appendChild(button);
-                    } else if (header) {
-                        header.style.display = 'flex';
-                        header.style.justifyContent = 'space-between';
-                        header.style.alignItems = 'center';
-                        header.appendChild(button);
-                    } else {
-                        section.insertBefore(button, section.firstChild);
-                    }
-                    
-                    console.log(`✅ Button added for ${storeName} at ${selector}`);
-                    injected = true;
-                    break;
-                }
-            }
-            
-            if (!injected) {
-                console.warn(`⚠️ Section not found for: ${storeName}`);
-            }
-        }
-        
-        console.log('✅ Auto-injection complete');
-        
-    } catch (error) {
-        console.error('❌ Auto-injection failed:', error);
-    }
+    });
+
+    console.log(`✅ Auto-injection complete: ${successCount} added, ${skippedCount} skipped`);
 }
 
 function attachDashboardListeners() {
