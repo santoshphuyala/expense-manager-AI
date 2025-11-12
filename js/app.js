@@ -2520,22 +2520,7 @@ class ExpenseTrackerApp {
             await this.loadCategories();
         }
     }
-// Add this function to refresh all dashboard widgets
-function refreshDashboard() {
-    if (typeof updateUpcomingRenewals === 'function') {
-        updateUpcomingRenewals();
-    }
-    if (typeof updateUpcomingBills === 'function') {
-        updateUpcomingBills();
-    }
-    if (typeof updateExpiringWarranties === 'function') {
-        updateExpiringWarranties();
-    }
-    if (typeof updateBudgetAlerts === 'function') {
-        updateBudgetAlerts();
-    }
-}
-   
+  
 // ==========================================
 // UTILITY FUNCTIONS
 // ==========================================
