@@ -1,0 +1,503 @@
+/* backup.css - Enhanced Backup System Styles */
+
+/* Dashboard Backup Section */
+.dashboard-backup-section {
+    margin: 20px 0;
+}
+
+.backup-card {
+    background: white;
+    border-radius: 12px;
+    padding: 24px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.backup-card h3 {
+    margin: 0 0 20px 0;
+    font-size: 1.5rem;
+    color: #1f2937;
+}
+
+.backup-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 24px;
+}
+
+.backup-column h4 {
+    margin: 0 0 16px 0;
+    font-size: 1.1rem;
+    color: #4b5563;
+}
+
+/* Buttons */
+.btn-primary, .btn-secondary {
+    width: 100%;
+    padding: 12px 20px;
+    border: none;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 500;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: all 0.3s ease;
+    margin-bottom: 12px;
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+}
+
+.btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+}
+
+.btn-secondary {
+    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    color: white;
+}
+
+.btn-secondary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(245, 87, 108, 0.4);
+}
+
+/* Module Export Buttons */
+.module-export-buttons {
+    display: inline-block;
+    margin: 10px 0;
+}
+
+.export-dropdown {
+    position: relative;
+    display: inline-block;
+}
+
+.btn-export-module {
+    background: #3b82f6;
+    color: white;
+    padding: 8px 16px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: background 0.3s;
+}
+
+.btn-export-module:hover {
+    background: #2563eb;
+}
+
+.export-dropdown-content {
+    display: none;
+    position: absolute;
+    background-color: white;
+    min-width: 180px;
+    box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+    border-radius: 8px;
+    z-index: 1000;
+    overflow: hidden;
+    top: 100%;
+    left: 0;
+    margin-top: 4px;
+}
+
+.export-dropdown:hover .export-dropdown-content {
+    display: block;
+}
+
+.export-dropdown-content a {
+    color: #1f2937;
+    padding: 12px 16px;
+    text-decoration: none;
+    display: block;
+    transition: background 0.2s;
+}
+
+.export-dropdown-content a:hover {
+    background-color: #f3f4f6;
+}
+
+/* ==================== MODAL STYLES ==================== */
+
+.backup-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.6);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10000;
+    animation: fadeIn 0.3s ease-out;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+.backup-modal-content {
+    background: white;
+    border-radius: 16px;
+    max-width: 800px;
+    width: 90%;
+    max-height: 90vh;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    animation: slideUp 0.3s ease-out;
+}
+
+@keyframes slideUp {
+    from {
+        transform: translateY(50px);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+.backup-modal-header {
+    padding: 20px 24px;
+    border-bottom: 1px solid #e5e7eb;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.backup-modal-header h2 {
+    margin: 0;
+    font-size: 1.5rem;
+    color: #1f2937;
+}
+
+.backup-modal-close {
+    background: none;
+    border: none;
+    font-size: 2rem;
+    color: #6b7280;
+    cursor: pointer;
+    line-height: 1;
+    transition: color 0.2s;
+}
+
+.backup-modal-close:hover {
+    color: #1f2937;
+}
+
+.backup-modal-body {
+    padding: 24px;
+    overflow-y: auto;
+    flex: 1;
+}
+
+/* Import Summary Cards */
+.import-summary {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
+    margin-bottom: 24px;
+}
+
+.summary-card {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 20px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.summary-card.new {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+}
+
+.summary-card.duplicate {
+    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+}
+
+.summary-card.update {
+    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+}
+
+.summary-icon {
+    font-size: 2rem;
+}
+
+.summary-number {
+    font-size: 2rem;
+    font-weight: bold;
+}
+
+.summary-label {
+    font-size: 0.9rem;
+    opacity: 0.9;
+}
+
+/* Import Details */
+.import-details {
+    margin-bottom: 24px;
+}
+
+.module-analysis {
+    background: #f9fafb;
+    padding: 16px;
+    border-radius: 8px;
+    margin-bottom: 16px;
+}
+
+.module-analysis h4 {
+    margin: 0 0 12px 0;
+    color: #1f2937;
+    font-size: 1.1rem;
+}
+
+.module-stats {
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+    margin-bottom: 12px;
+}
+
+.module-stats span {
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+
+.stat-new {
+    background: #d1fae5;
+    color: #065f46;
+}
+
+.stat-duplicate {
+    background: #fef3c7;
+    color: #92400e;
+}
+
+.stat-update {
+    background: #dbeafe;
+    color: #1e40af;
+}
+
+.module-details {
+    margin-top: 12px;
+}
+
+.module-details summary {
+    cursor: pointer;
+    color: #3b82f6;
+    font-weight: 500;
+    padding: 8px;
+    border-radius: 4px;
+    transition: background 0.2s;
+}
+
+.module-details summary:hover {
+    background: #eff6ff;
+}
+
+.detail-section {
+    margin-top: 12px;
+}
+
+.item-list {
+    margin-bottom: 16px;
+}
+
+.item-list h5 {
+    margin: 0 0 8px 0;
+    font-size: 0.95rem;
+    color: #4b5563;
+}
+
+.items-container {
+    background: white;
+    border-radius: 6px;
+    padding: 12px;
+}
+
+.preview-item {
+    padding: 8px;
+    border-left: 3px solid #e5e7eb;
+    margin-bottom: 8px;
+    font-size: 0.85rem;
+    color: #6b7280;
+}
+
+.preview-item strong {
+    color: #1f2937;
+}
+
+.item-list.new .preview-item {
+    border-left-color: #10b981;
+}
+
+.item-list.duplicate .preview-item {
+    border-left-color: #f59e0b;
+}
+
+.item-list.update .preview-item {
+    border-left-color: #3b82f6;
+}
+
+.more-items {
+    text-align: center;
+    color: #6b7280;
+    font-style: italic;
+    padding: 8px;
+}
+
+.no-data {
+    text-align: center;
+    color: #9ca3af;
+    padding: 40px 20px;
+}
+
+/* Import Options */
+.import-options {
+    background: #f9fafb;
+    padding: 20px;
+    border-radius: 8px;
+}
+
+.import-options h3 {
+    margin: 0 0 16px 0;
+    font-size: 1.1rem;
+    color: #1f2937;
+}
+
+.option-radio {
+    display: flex;
+    align-items: start;
+    padding: 12px;
+    margin-bottom: 8px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.option-radio:hover {
+    background: white;
+}
+
+.option-radio input[type="radio"] {
+    margin-right: 12px;
+    margin-top: 4px;
+    cursor: pointer;
+}
+
+.option-radio span {
+    color: #374151;
+    line-height: 1.5;
+}
+
+/* Modal Footer */
+.backup-modal-footer {
+    padding: 16px 24px;
+    border-top: 1px solid #e5e7eb;
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+}
+
+.btn-cancel, .btn-confirm {
+    padding: 10px 24px;
+    border: none;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.btn-cancel {
+    background: #e5e7eb;
+    color: #374151;
+}
+
+.btn-cancel:hover {
+    background: #d1d5db;
+}
+
+.btn-confirm {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    color: white;
+}
+
+.btn-confirm:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
+}
+
+/* Notifications */
+@keyframes slideIn {
+    from {
+        transform: translateX(400px);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+@keyframes slideOut {
+    from {
+        transform: translateX(0);
+        opacity: 1;
+    }
+    to {
+        transform: translateX(400px);
+        opacity: 0;
+    }
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .backup-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .backup-card {
+        padding: 16px;
+    }
+    
+    .btn-primary, .btn-secondary {
+        font-size: 0.9rem;
+        padding: 10px 16px;
+    }
+
+    .backup-modal-content {
+        width: 95%;
+        max-height: 95vh;
+    }
+
+    .import-summary {
+        grid-template-columns: 1fr;
+    }
+
+    .summary-card {
+        padding: 16px;
+    }
+
+    .module-stats {
+        flex-direction: column;
+    }
+}
