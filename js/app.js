@@ -2637,82 +2637,72 @@ async fileToBase64(file) {
 } // <-- CLOSING BRACE FOR ExpenseTrackerApp CLASS
 
 // ==========================================
-// SERVICE WORKER REGISTRATION - ENHANCED
+// SERVICE WORKER REGISTRATION
 // ==========================================
 
-if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-        console.log('🔧 Registering Service Worker...');
-        
-        navigator.serviceWorker.register('/sw.js') // ← Absolute path
-            .then(registration => {
-                console.log('✅ Service Worker registered:', registration.scope);
-                
-                // ✅ CHECK FOR UPDATES
-                registration.addEventListener('updatefound', () => {
-                    const newWorker = registration.installing;
-                    console.log('🔄 New Service Worker found!');
-                    
-                    newWorker.addEventListener('statechange', () => {
-                        if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                            console.log('📦 New version available!');
-                            
-                            // Show update notification to user
-                            if (typeof app !== 'undefined' && app.showToast) {
-                                app.showToast(
-                                    '🎉 New version available! Refresh to update.', 
-                                    'info',
-                                    10000 // Show for 10 seconds
-                                );
-                            }
-                        }
-                    });
+async function registerServiceWorker() {
+    if ('serviceWorker' in navigator) {
+        try {
+            console.log('🔧 Registering Service Worker...');
+            
+            // ✅ FIX: Detect correct base path from current location
+            const pathSegments = window.location.pathname.split('/').filter(Boolean);
+            const basePath = pathSegments.length > 0 && pathSegments[0] !== 'index.html' 
+                ? `/${pathSegments[0]}/` 
+                : '/';
+            
+            const swPath = `${basePath}sw.js`;
+            
+            console.log('📍 Detected base path:', basePath);
+            console.log('📍 Service Worker path:', swPath);
+            console.log('📍 Full URL:', window.location.origin + swPath);
+            
+            // ✅ Check if sw.js exists before registering
+            const swExists = await fetch(swPath, { method: 'HEAD' })
+                .then(res => {
+                    console.log('📡 SW file check response:', res.status);
+                    return res.ok;
+                })
+                .catch(err => {
+                    console.warn('📡 SW file check failed:', err.message);
+                    return false;
                 });
-                
-                // ✅ CHECK FOR UPDATES PERIODICALLY (every hour)
-                setInterval(() => {
-                    registration.update()
-                        .then(() => console.log('🔍 Checked for Service Worker updates'))
-                        .catch(err => console.warn('⚠️ Update check failed:', err.message));
-                }, 60 * 60 * 1000); // 1 hour
-                
-            })
-            .catch(error => {
-                console.error('❌ Service Worker registration failed:', error.message);
-                console.error('Stack:', error.stack);
+            
+            if (!swExists) {
+                console.warn('⚠️ Service Worker file not found, app will work without offline support');
+                console.warn('💡 Place sw.js in the root directory of your site');
+                return;
+            }
+            
+            // ✅ Register with correct scope
+            const registration = await navigator.serviceWorker.register(swPath, {
+                scope: basePath
             });
-        
-        // ✅ LISTEN FOR MESSAGES FROM SERVICE WORKER
-        navigator.serviceWorker.addEventListener('message', event => {
-            console.log('📨 Message from Service Worker:', event.data);
             
-            if (event.data && event.data.type === 'SYNC_COMPLETE') {
-                if (typeof app !== 'undefined' && app.showToast) {
-                    app.showToast('✅ Data synced successfully!', 'success');
-                }
-            }
-        });
-        
-        // ✅ HANDLE CONTROLLER CHANGE (New SW activated)
-        navigator.serviceWorker.addEventListener('controllerchange', () => {
-            console.log('🔄 Service Worker controller changed');
+            console.log('✅ Service Worker registered successfully!');
+            console.log('📦 Scope:', registration.scope);
             
-            if (typeof app !== 'undefined' && app.showToast) {
-                app.showToast(
-                    '🔄 App updated! Reloading...', 
-                    'info',
-                    2000
-                );
+            // Handle updates
+            registration.addEventListener('updatefound', () => {
+                const newWorker = registration.installing;
+                console.log('🔄 Service Worker update found');
                 
-                // Auto-reload after 2 seconds
-                setTimeout(() => {
-                    window.location.reload();
-                }, 2000);
-            }
-        });
-    });
+                newWorker.addEventListener('statechange', () => {
+                    if (newWorker.state === 'activated') {
+                        console.log('✅ New Service Worker activated');
+                    }
+                });
+            });
+            
+        } catch (error) {
+            console.warn('⚠️ Service Worker registration skipped:', error.message);
+            console.log('ℹ️ App will continue without offline support');
+            // Silently fail - app works without SW
+        }
+    } else {
+        console.log('ℹ️ Service Workers not supported in this browser');
+    }
 }
-
 // ==========================================
 // OFFLINE/ONLINE DETECTION
 // ==========================================
