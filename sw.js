@@ -1,18 +1,30 @@
 const CACHE_NAME = 'expense-tracker-pro-v2.0.0';
+
+// ✅ FIX: Get base path dynamically
+const getBasePath = () => {
+  const pathSegments = self.location.pathname.split('/').filter(Boolean);
+  return pathSegments.length > 1 ? `/${pathSegments[0]}/` : '/';
+};
+
+const basePath = getBasePath();
+
 const urlsToCache = [
-  '/',
-  '/index.html',
-  '/css/styles.css',
-  '/js/app.js',
-  '/js/database.js',
-  '/js/scanner.js',
-  '/js/analytics.js',
-  '/js/insights.js',
-  '/manifest.json',
+  basePath,
+  `${basePath}index.html`,
+  `${basePath}css/styles.css`,
+  `${basePath}js/app.js`,
+  `${basePath}js/database.js`,
+  `${basePath}js/scanner.js`,
+  `${basePath}js/analytics.js`,
+  `${basePath}js/insights.js`,
+  `${basePath}manifest.json`,
   'https://cdn.jsdelivr.net/npm/tesseract.js@4/dist/tesseract.min.js',
   'https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js',
   'https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js'
 ];
+
+console.log('[SW] Base path detected:', basePath);
+console.log('[SW] URLs to cache:', urlsToCache);
 
 // ==========================================
 // INSTALL EVENT
