@@ -3461,49 +3461,67 @@ async fileToBase64(file) {
 // SERVICE WORKER REGISTRATION
 // ==========================================
 
-// ✅ NEW CODE - Replace with:
 async function registerServiceWorker() {
     if ('serviceWorker' in navigator) {
         try {
             console.log('🔧 Registering Service Worker...');
             
-            // Get the correct base path for GitHub Pages
-            const basePath = window.location.hostname === 'localhost' 
-                ? '/' 
-                : '/expense-manager-AI/';
+            // ✅ FIX: Detect correct base path from current location
+            const pathSegments = window.location.pathname.split('/').filter(Boolean);
+            const basePath = pathSegments.length > 0 && pathSegments[0] !== 'index.html' 
+                ? `/${pathSegments[0]}/` 
+                : '/';
             
             const swPath = `${basePath}sw.js`;
             
-            // Check if sw.js exists before registering
+            console.log('📍 Detected base path:', basePath);
+            console.log('📍 Service Worker path:', swPath);
+            console.log('📍 Full URL:', window.location.origin + swPath);
+            
+            // ✅ Check if sw.js exists before registering
             const swExists = await fetch(swPath, { method: 'HEAD' })
-                .then(res => res.ok)
-                .catch(() => false);
+                .then(res => {
+                    console.log('📡 SW file check response:', res.status);
+                    return res.ok;
+                })
+                .catch(err => {
+                    console.warn('📡 SW file check failed:', err.message);
+                    return false;
+                });
             
             if (!swExists) {
-                console.warn('⚠️ Service Worker file not found, skipping registration');
+                console.warn('⚠️ Service Worker file not found, app will work without offline support');
+                console.warn('💡 Place sw.js in the root directory of your site');
                 return;
             }
             
-            const registration = await navigator.serviceWorker.register(swPath);
-            console.log('✅ Service Worker registered:', registration.scope);
+            // ✅ Register with correct scope
+            const registration = await navigator.serviceWorker.register(swPath, {
+                scope: basePath
+            });
             
+            console.log('✅ Service Worker registered successfully!');
+            console.log('📦 Scope:', registration.scope);
+            
+            // Handle updates
             registration.addEventListener('updatefound', () => {
                 const newWorker = registration.installing;
                 console.log('🔄 Service Worker update found');
                 
                 newWorker.addEventListener('statechange', () => {
                     if (newWorker.state === 'activated') {
-                        console.log('✅ Service Worker activated');
+                        console.log('✅ New Service Worker activated');
                     }
                 });
             });
             
         } catch (error) {
-            console.warn('⚠️ Service Worker registration failed:', error.message);
-            // Don't show error to user, app works without SW
+            console.warn('⚠️ Service Worker registration skipped:', error.message);
+            console.log('ℹ️ App will continue without offline support');
+            // Silently fail - app works without SW
         }
     } else {
-        console.log('ℹ️ Service Workers not supported');
+        console.log('ℹ️ Service Workers not supported in this browser');
     }
 }
 
