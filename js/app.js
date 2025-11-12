@@ -2769,39 +2769,6 @@ window.updateServiceWorker = async function() {
 };
 
 console.log('📦 Service Worker registration script loaded');
-// ==========================================
-// INITIALIZE APP
-// ==========================================
-
-let app;
-document.addEventListener('DOMContentLoaded', () => {
-    console.log('🎯 DOM Content Loaded - Initializing Expense Tracker Pro...');
-    console.log('🕒 Timestamp:', new Date().toISOString());
-    
-    try {
-        app = new ExpenseTrackerApp();
-        console.log('✅ App initialized successfully');
-        console.log('🚀 Application ready!');
-    } catch (error) {
-        console.error('❌ App initialization failed:', error);
-        console.error('Stack trace:', error.stack);
-    }
-});
-
-// Global error handlers
-window.addEventListener('error', (event) => {
-    console.error('🚨 Global error:', event.error);
-    console.error('Message:', event.message);
-    console.error('Source:', event.filename);
-    console.error('Line:', event.lineno, 'Column:', event.colno);
-});
-
-window.addEventListener('unhandledrejection', (event) => {
-    console.error('🚨 Unhandled promise rejection:', event.reason);
-});
-
-console.log('📦 Script loaded successfully');
-
 // ==================== DASHBOARD REFRESH UTILITY ====================
 function refreshDashboard() {
     try {
@@ -2844,3 +2811,37 @@ if (typeof document !== 'undefined') {
         }
     });
 }
+
+// ==========================================
+// INITIALIZE APP
+// ==========================================
+
+let app;
+document.addEventListener('DOMContentLoaded', () => {
+    console.log('🎯 DOM Content Loaded - Initializing Expense Tracker Pro...');
+    console.log('🕒 Timestamp:', new Date().toISOString());
+    
+    try {
+        app = new ExpenseTrackerApp();
+        console.log('✅ App initialized successfully');
+        console.log('🚀 Application ready!');
+    } catch (error) {
+        console.error('❌ App initialization failed:', error);
+        console.error('Stack trace:', error.stack);
+    }
+});
+
+// Global error handlers
+window.addEventListener('error', (event) => {
+    console.error('🚨 Global error:', event.error);
+    console.error('Message:', event.message);
+    console.error('Source:', event.filename);
+    console.error('Line:', event.lineno, 'Column:', event.colno);
+});
+
+window.addEventListener('unhandledrejection', (event) => {
+    console.error('🚨 Unhandled promise rejection:', event.reason);
+});
+
+console.log('📦 Script loaded successfully');
+
