@@ -7,20 +7,26 @@
     <title>Expense Tracker Pro</title>
     <link rel="manifest" href="manifest.json">
     <link rel="stylesheet" href="css/styles.css">
-<link rel="apple-touch-icon" sizes="180x180" href="icons/apple-touch-icon.png">
-<link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32x32.png">
-<link rel="icon" type="image/png" sizes="16x16" href="icons/favicon-16x16.png">
-<link rel="manifest" href="icons/site.webmanifest">
-    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <link rel="stylesheet" href="css/backup.css">
+    
+    <link rel="apple-touch-icon" sizes="180x180" href="icons/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="icons/favicon-16x16.png">
+    <link rel="manifest" href="icons/site.webmanifest">
+    
+    <!-- SheetJS for Excel Support -->
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/tesseract.js@4/dist/tesseract.min.js"></script>
-<!-- Bootstrap 5 CSS -->
-<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-<!-- Bootstrap Icons -->
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
-<!-- Bootstrap 5 JS (for accordion) -->
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <!-- Bootstrap 5 JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </head>
+
 <body>
     <!-- Header -->
     <header class="header">
@@ -81,6 +87,7 @@
         
         <!-- Dashboard Tab -->
         <section id="dashboard" class="tab-content active">
+            
             <!-- Quick Actions -->
             <div class="quick-actions">
                 <button class="quick-action-btn income" data-action="income">
@@ -100,6 +107,8 @@
                     <span>View Report</span>
                 </button>
             </div>
+
+            <!-- 🆕 BACKUP UI WILL BE INJECTED HERE BY backup.js -->
 
             <!-- Stats Grid -->
             <div class="stats-grid">
@@ -198,7 +207,7 @@
 
         <!-- Transactions Tab -->
         <section id="transactions" class="tab-content">
-            <div class="action-bar">
+            <div class="action-bar section-header" id="transactions-section">
                 <button id="addTransactionBtn" class="btn btn-primary">➕ Add Transaction</button>
                 <div class="filter-group">
                     <input type="date" id="filterStartDate" class="date-input">
@@ -246,7 +255,7 @@
         <!-- Analytics Tab -->
         <section id="analytics" class="tab-content">
             <div class="analytics-container">
-                <div class="analytics-controls">
+                <div class="analytics-controls section-header" id="analytics-section">
                     <select id="analyticsTimeRange" class="select-input">
                         <option value="thisMonth">This Month</option>
                         <option value="lastMonth">Last Month</option>
@@ -343,10 +352,8 @@
                     </form>
                 </div>
 
-                <div class="action-bar">
+                <div class="action-bar section-header" id="shoppingList-section">
                     <button id="createShoppingListBtn" class="btn btn-primary">📝 New List</button>
-                    <button id="importShoppingListBtn" class="btn btn-secondary">📥 Import</button>
-                    <button id="exportShoppingListBtn" class="btn btn-secondary">📤 Export</button>
                     <select id="shoppingListFilter" class="select-input">
                         <option value="all">All Lists</option>
                         <option value="active">Active</option>
@@ -382,10 +389,8 @@
         <!-- Subscriptions Tab -->
         <section id="subscriptions" class="tab-content">
             <div class="subscriptions-container">
-                <div class="action-bar">
+                <div class="action-bar section-header" id="subscriptions-section">
                     <button id="addSubscriptionBtn" class="btn btn-primary">➕ Add Subscription</button>
-                    <button id="importSubscriptionsBtn" class="btn btn-secondary">📥 Import</button>
-                    <button id="exportSubscriptionsBtn" class="btn btn-secondary">📤 Export</button>
                 </div>
 
                 <!-- Subscription Summary -->
@@ -457,10 +462,8 @@
         <!-- Wishlist Tab -->
         <section id="wishlist" class="tab-content">
             <div class="wishlist-container">
-                <div class="action-bar">
+                <div class="action-bar section-header" id="wishlist-section">
                     <button id="addWishlistBtn" class="btn btn-primary">⭐ Add to Wishlist</button>
-                    <button id="importWishlistBtn" class="btn btn-secondary">📥 Import</button>
-                    <button id="exportWishlistBtn" class="btn btn-secondary">📤 Export</button>
                     <select id="wishlistSortBy" class="select-input">
                         <option value="priority">Sort by Priority</option>
                         <option value="price">Sort by Price</option>
@@ -499,7 +502,7 @@
         <!-- Documents & Warranties Tab -->
         <section id="documents" class="tab-content">
             <div class="documents-container">
-                <div class="action-bar">
+                <div class="action-bar section-header" id="documents-section">
                     <button id="addDocumentBtn" class="btn btn-primary">📄 Add Document</button>
                     <button id="addWarrantyBtn" class="btn btn-primary">🛡️ Add Warranty</button>
                     <select id="documentFilter" class="select-input">
@@ -543,7 +546,7 @@
         <!-- AI Insights Tab -->
         <section id="insights" class="tab-content">
             <div class="insights-container">
-                <div class="insights-header">
+                <div class="insights-header section-header" id="insights-section">
                     <h2>🤖 AI-Powered Financial Insights</h2>
                     <button id="refreshInsightsBtn" class="btn btn-primary">🔄 Refresh Insights</button>
                 </div>
@@ -613,186 +616,45 @@
                         </div>
                     </div>
 
-                    <!-- Import/Export -->
+                    <!-- Import/Export - CLEANED UP VERSION -->
                     <div class="settings-card">
                         <h3>📥📤 Backup & Restore</h3>
-                        <div class="import-export-actions">
-                            <h4>Export Data</h4>
-                            <div class="btn-group">
-                                <button id="exportJSONBtn" class="btn btn-secondary">JSON</button>
-                                <button id="exportCSVBtn" class="btn btn-secondary">CSV</button>
-                                <button id="exportExcelBtn" class="btn btn-secondary">Excel</button>
-                                <button id="exportFullBackupBtn" class="btn btn-success">Full Backup</button>
-                            </div>
+                        <div class="backup-info">
+                            <p style="margin-bottom: 1rem; color: var(--text-secondary); line-height: 1.6;">
+                                Use the comprehensive backup system available in the Dashboard for full data management with duplicate detection and preview.
+                            </p>
                             
-                            <h4>Import Data</h4>
-                            <div class="file-input-wrapper">
-                                <input type="file" id="importFile" accept=".json,.csv,.xlsx,.xls" class="file-input">
-                                <label for="importFile" class="btn btn-primary">Choose File</label>
-                                <span id="fileName">No file chosen</span>
-                            </div>
-                            <button id="importBtn" class="btn btn-success" disabled>Import Data</button>
-                        </div>
-                    </div>
-                    
-                    
-<!-- IMPORT OPTIONS MODAL - ENHANCED -->
-<div id="importOptionsModal" class="modal import-modal">
-    <div class="modal-content import-modal-content">
-        <div class="modal-header import-modal-header">
-            <h2>
-                <i class="fas fa-file-import"></i>
-                Import Preview
-            </h2>
-            <button class="close-btn" onclick="app.closeImportOptionsDialog()">
-                <i class="fas fa-times"></i>
-            </button>
-        </div>
-
-        <div class="modal-body import-modal-body">
-            
-            <!-- STATISTICS GRID -->
-            <div class="import-stats-grid">
-                <div class="stat-card stat-total">
-                    <div class="stat-icon">
-                        <i class="fas fa-file-alt"></i>
-                    </div>
-                    <div class="stat-info">
-                        <div class="stat-label">Total Records</div>
-                        <div class="stat-value" id="importTotalCount">0</div>
-                    </div>
-                </div>
-
-                <div class="stat-card stat-valid">
-                    <div class="stat-icon">
-                        <i class="fas fa-check-circle"></i>
-                    </div>
-                    <div class="stat-info">
-                        <div class="stat-label">Valid</div>
-                        <div class="stat-value" id="importValidCount">0</div>
-                    </div>
-                </div>
-
-                <div class="stat-card stat-invalid">
-                    <div class="stat-icon">
-                        <i class="fas fa-exclamation-circle"></i>
-                    </div>
-                    <div class="stat-info">
-                        <div class="stat-label">Invalid</div>
-                        <div class="stat-value" id="importInvalidCount">0</div>
-                    </div>
-                </div>
-
-                <div class="stat-card stat-new">
-                    <div class="stat-icon">
-                        <i class="fas fa-plus-circle"></i>
-                    </div>
-                    <div class="stat-info">
-                        <div class="stat-label">New Records</div>
-                        <div class="stat-value" id="importNewCount">0</div>
-                    </div>
-                </div>
-
-                <div class="stat-card stat-duplicate">
-                    <div class="stat-icon">
-                        <i class="fas fa-clone"></i>
-                    </div>
-                    <div class="stat-info">
-                        <div class="stat-label">Duplicates</div>
-                        <div class="stat-value" id="importDuplicateCount">0</div>
-                    </div>
-                </div>
-
-                <div class="stat-card stat-existing">
-                    <div class="stat-icon">
-                        <i class="fas fa-database"></i>
-                    </div>
-                    <div class="stat-info">
-                        <div class="stat-label">Existing Data</div>
-                        <div class="stat-value" id="importExistingCount">0</div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- ERRORS SECTION -->
-            <div id="importErrorsSection" class="import-section import-errors" style="display: none;">
-                <div class="section-header error-header">
-                    <i class="fas fa-times-circle"></i>
-                    <h3>Validation Errors</h3>
-                </div>
-                <ul id="importErrorsList" class="import-list error-list"></ul>
-            </div>
-
-            <!-- WARNINGS SECTION -->
-            <div id="importWarningsSection" class="import-section import-warnings" style="display: none;">
-                <div class="section-header warning-header">
-                    <i class="fas fa-exclamation-triangle"></i>
-                    <h3>Warnings</h3>
-                </div>
-                <ul id="importWarningsList" class="import-list warning-list"></ul>
-            </div>
-
-            <!-- IMPORT OPTIONS -->
-            <div class="import-options-section">
-                <h3 class="options-title">
-                    <i class="fas fa-cog"></i>
-                    Choose Import Method
-                </h3>
-                
-                <div class="import-buttons-grid">
-                    
-                    <!-- MERGE OPTION -->
-                    <button id="importMergeBtn" class="import-option-btn merge-btn" 
-                            onclick="app.executeImport(app.pendingImportData.transactions, 'merge')">
-                        <div class="btn-icon">
-                            <i class="fas fa-code-branch"></i>
-                        </div>
-                        <div class="btn-content">
-                            <div class="btn-title">Merge (Recommended)</div>
-                            <div class="btn-description">
-                                Add <strong id="mergeNewCount">0</strong> new records, 
-                                skip <strong id="mergeDupeCount">0</strong> duplicates
+                            <div class="backup-quick-actions">
+                                <h4 style="margin-top: 1.5rem; margin-bottom: 0.75rem;">Quick Actions</h4>
+                                <button onclick="document.querySelector('[data-tab=dashboard]').click(); setTimeout(() => { const backupSection = document.querySelector('.dashboard-backup-section'); if(backupSection) backupSection.scrollIntoView({behavior: 'smooth', block: 'center'}); }, 200)" class="btn btn-primary" style="width: 100%; margin-bottom: 1rem;">
+                                    📦 Go to Full Backup System
+                                </button>
+                                
+                                <hr style="margin: 1.5rem 0; border: none; border-top: 1px solid #e0e0e0;">
+                                
+                                <h4 style="margin-bottom: 0.75rem;">Quick Export</h4>
+                                <div style="display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 1rem;">
+                                    <button onclick="if(typeof backupManager !== 'undefined') backupManager.exportFullBackupJSON(); else alert('Backup system loading...')" class="btn btn-secondary" style="flex: 1;">
+                                        📄 Export JSON
+                                    </button>
+                                    <button onclick="if(typeof backupManager !== 'undefined') backupManager.exportFullBackupExcel(); else alert('Backup system loading...')" class="btn btn-secondary" style="flex: 1;">
+                                        📊 Export Excel
+                                    </button>
+                                </div>
+                                
+                                <h4 style="margin-bottom: 0.75rem;">Quick Import</h4>
+                                <div style="margin-bottom: 0.5rem;">
+                                    <input type="file" id="quickImportFile" accept=".json,.xlsx,.xls" style="display: none;">
+                                    <button onclick="document.getElementById('quickImportFile').click()" class="btn btn-primary" style="width: 100%;">
+                                        📥 Choose File to Import
+                                    </button>
+                                </div>
+                                <p id="quickFileName" style="font-size: 0.85rem; color: var(--text-secondary); text-align: center; margin-top: 0.5rem;">No file chosen</p>
                             </div>
                         </div>
-                        <div class="btn-badge merge-badge">Safe</div>
-                    </button>
+                    </div>
 
-                    <!-- OVERWRITE OPTION -->
-                    <button id="importOverwriteBtn" class="import-option-btn overwrite-btn" 
-                            onclick="app.executeImport(app.pendingImportData.transactions, 'overwrite')">
-                        <div class="btn-icon">
-                            <i class="fas fa-sync-alt"></i>
-                        </div>
-                        <div class="btn-content">
-                            <div class="btn-title">Replace All</div>
-                            <div class="btn-description">
-                                Delete <strong id="overwriteDeleteCount">0</strong> existing, 
-                                import <strong id="overwriteImportCount">0</strong> new
-                            </div>
-                        </div>
-                        <div class="btn-badge danger-badge">Danger</div>
-                    </button>
-
-                    <!-- CANCEL OPTION -->
-                    <button class="import-option-btn cancel-btn" 
-                            onclick="app.executeImport([], 'skip')">
-                        <div class="btn-icon">
-                            <i class="fas fa-ban"></i>
-                        </div>
-                        <div class="btn-content">
-                            <div class="btn-title">Cancel</div>
-                            <div class="btn-description">
-                                Don't import anything
-                            </div>
-                        </div>
-                    </button>
-
-                </div>
-            </div>
-
-        </div>
-    </div>
-</div>                    <!-- App Settings -->
+                    <!-- App Settings -->
                     <div class="settings-card">
                         <h3>⚙️ App Settings</h3>
                         <div class="settings-options">
@@ -843,7 +705,7 @@
 
     </main>
 
-    <!-- Modals -->
+    <!-- MODALS -->
     
     <!-- Receipt Scanner Modal -->
     <div id="receiptScannerModal" class="modal">
@@ -1343,5 +1205,46 @@
     <script src="js/analytics.js"></script>
     <script src="js/insights.js"></script>
     <script src="js/app.js"></script>
+    
+    <!-- Backup System Script - Auto-detection handles everything -->
+    <script src="js/backup.js"></script>
+    
+    <!-- Quick Import Handler for More Tab ONLY -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Quick Import Handler
+            const quickImportFile = document.getElementById('quickImportFile');
+            if (quickImportFile) {
+                quickImportFile.addEventListener('change', function(e) {
+                    const file = e.target.files[0];
+                    if (!file) return;
+                    
+                    const fileNameDisplay = document.getElementById('quickFileName');
+                    if (fileNameDisplay) {
+                        fileNameDisplay.textContent = file.name;
+                    }
+                    
+                    // Wait for backupManager to be available
+                    setTimeout(function() {
+                        if (typeof backupManager !== 'undefined') {
+                            if (file.name.endsWith('.json')) {
+                                backupManager.importFullBackupJSON(file);
+                            } else if (file.name.endsWith('.xlsx') || file.name.endsWith('.xls')) {
+                                backupManager.importFullBackupExcel(file);
+                            } else {
+                                alert('❌ Unsupported file type. Please use JSON or Excel files.');
+                            }
+                        } else {
+                            alert('⏳ Backup system is still loading. Please try again in a moment.');
+                        }
+                    }, 100);
+                    
+                    // Reset input
+                    e.target.value = '';
+                });
+            }
+        });
+    </script>
+    
 </body>
 </html>
