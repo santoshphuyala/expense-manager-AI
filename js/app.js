@@ -2535,7 +2535,16 @@ function refreshDashboard() {
         updateBudgetAlerts();
     }
 }
-    
+    // Add this after the refreshDashboard function
+// Auto-refresh dashboard every 5 seconds
+setInterval(refreshDashboard, 5000);
+
+// Also refresh on storage changes from other tabs
+window.addEventListener('storage', function(e) {
+    if (e.key === 'expenses') {
+        refreshDashboard();
+    }
+});
 // ==========================================
 // UTILITY FUNCTIONS
 // ==========================================
