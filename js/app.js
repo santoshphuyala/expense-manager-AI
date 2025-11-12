@@ -1938,12 +1938,1034 @@ class ExpenseTrackerApp {
         return Math.ceil((target - now) / (1000 * 60 * 60 * 24));
     }
 
-    // ==========================================
-    // WISHLIST, DOCUMENTS, ANALYTICS, INSIGHTS
-    // (Keeping all remaining functions from your original code...)
+  
+        // ==========================================
+    // WISHLIST FUNCTIONS - COMPLETE
     // ==========================================
     
-    // ... [Include all remaining functions from your original code: wishlist, documents, analytics, insights, receipt scanner, settings, utility functions] ...
+    async openWishlistModal(editId = null) {
+        const form = document.getElementById('wishlistForm');
+        const title = document.getElementById('wishlistModalTitle');
+
+        if (editId) {
+            title.textContent = 'Edit Wishlist Item';
+            const item = await this.db.get('wishlist', editId);
+            
+            document.getElementById('wishItemName').value = item.name;
+            document.getElementById('wishCategory').value = item.category;
+            document.getElementById('wishPrice').value = item.price;
+            document.getElementById('wishPriority').value = item.priority;
+            document.getElementById('wishUrl').value = item.url || '';
+            document.getElementById('wishImageUrl').value = item.imageUrl || '';
+            document.getElementById('wishTargetDate').value = item.targetDate || '';
+            document.getElementById('wishNotes').value = item.notes || '';
+            document.getElementById('wishSavedAmount').value = item.savedAmount || 0;
+            
+            form.dataset.editId = editId;
+        } else {
+            title.textContent = 'Add to Wishlist';
+            form.reset();
+            delete form.dataset.editId;
+        }
+
+        this.openModal('wishlistModal');
+    }
+
+    async saveWishlistItem() {
+        const form = document.getElementById('wishlistForm');
+        const imageFile = document.getElementById('wishImage')?.files[0];
+        
+        let imageData = document.getElementById('wishImageUrl')?.value || '';
+        if (imageFile) {
+            imageData = await this.fileToBase64(imageFile);
+        }
+
+        const data = {
+            name: document.getElementById('wishItemName').value,
+            category: document.getElementById('wishCategory').value,
+            price: parseFloat(document.getElementById('wishPrice').value),
+            priority: document.getElementById('wishPriority').value,
+            url: document.getElementById('wishUrl').value,
+            imageUrl: imageData,
+            targetDate: document.getElementById('wishTargetDate').value,
+            notes: document.getElementById('wishNotes').value,
+            savedAmount: parseFloat(document.getElementById('wishSavedAmount').value) || 0,
+            purchased: false,
+            currency: this.currentCurrency,
+            createdAt: new Date().toISOString()
+        };
+
+        try {
+            if (form.dataset.editId) {
+                data.id = parseInt(form.dataset.editId);
+                await this.db.update('wishlist', data);
+                this.showToast('Wishlist item updated!', 'success');
+            } else {
+                await this.db.add('wishlist', data);
+                this.showToast('Added to wishlist!', 'success');
+            }
+
+            this.closeModal('wishlistModal');
+            form.reset();
+            await this.loadWishlist();
+        } catch (error) {
+            console.error('Error saving wishlist item:', error);
+            this.showToast('Error saving wishlist item', 'error');
+        }
+    }
+
+    async loadWishlist(sortBy = 'priority') {
+        let items = await this.db.getAll('wishlist');
+        
+        switch (sortBy) {
+            case 'price':
+                items.sort((a, b) => b.price - a.price);
+                break;
+            case 'date':
+                items.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+                break;
+            case 'category':
+                items.sort((a, b) => a.category.localeCompare(b.category));
+                break;
+            case 'priority':
+            default:
+                const priorityOrder = { urgent: 0, high: 1, medium: 2, low: 3 };
+                items.sort((a, b) => priorityOrder[a.priority] - priorityOrder[b.priority]);
+        }
+
+        const totalValue = items.reduce((sum, i) => sum + this.convertAmount(i.price, i.currency || 'NPR'), 0);
+        const savedAmount = items.reduce((sum, i) => sum + this.convertAmount(i.savedAmount, i.currency || 'NPR'), 0);
+        const purchased = items.filter(i => i.purchased).length;
+
+        this.updateElementText('totalWishlistItems', items.length);
+        this.updateElementText('totalWishlistValue', this.formatCurrency(totalValue));
+        this.updateElementText('wishlistSavedAmount', this.formatCurrency(savedAmount));
+        this.updateElementText('purchasedWishlistItems', purchased);
+
+        this.renderWishlistGrid(items);
+    }
+
+    renderWishlistGrid(items) {
+        const grid = document.getElementById('wishlistGrid');
+        if (!grid) return;
+        
+        if (items.length === 0) {
+            grid.innerHTML = '<p style="text-align:center; color:var(--text-secondary); padding:2rem;">No wishlist items yet</p>';
+            return;
+        }
+
+        const priorityColors = {
+            urgent: '#ef4444',
+            high: '#f59e0b',
+            medium: '#3b82f6',
+            low: '#6b7280'
+        };
+
+        const categoryIcons = {
+            electronics: '💻', clothing: '👕', books: '📚',
+            home: '🏠', sports: '⚽', travel: '✈️', other: '📦'
+        };
+
+        const html = items.map(item => {
+            const price = this.convertAmount(item.price, item.currency || 'NPR');
+            const saved = this.convertAmount(item.savedAmount || 0, item.currency || 'NPR');
+            const progress = price > 0 ? (saved / price) * 100 : 0;
+
+            return `
+                <div class="wishlist-card ${item.purchased ? 'purchased' : ''}" 
+                     style="border-top: 4px solid ${priorityColors[item.priority]}">
+                    ${item.imageUrl ? `
+                        <div class="wish-image" style="background-image: url('${item.imageUrl}')"></div>
+                    ` : `
+                        <div class="wish-image-placeholder">
+                            <span class="wish-icon">${categoryIcons[item.category]}</span>
+                        </div>
+                    `}
+                    <div class="wish-content">
+                        <div class="wish-header">
+                            <h3>${item.name}</h3>
+                            <span class="wish-priority ${item.priority}">${item.priority}</span>
+                        </div>
+                        <p class="wish-price">${this.formatCurrency(price)}</p>
+                        ${item.notes ? `<p class="wish-notes">${item.notes}</p>` : ''}
+                        ${item.targetDate ? `<p class="wish-date">🎯 ${item.targetDate}</p>` : ''}
+                        
+                        <div class="wish-progress">
+                            <div class="progress-info">
+                                <span>Saved: ${this.formatCurrency(saved)}</span>
+                                <span>${progress.toFixed(0)}%</span>
+                            </div>
+                            <div class="progress-bar">
+                                <div class="progress-fill" style="width: ${Math.min(progress, 100)}%"></div>
+                            </div>
+                        </div>
+
+                        <div class="wish-actions">
+                            ${item.url ? `<a href="${item.url}" target="_blank" class="btn btn-ghost">🔗</a>` : ''}
+                            <button class="btn-edit" onclick="app.updateWishlistSavings(${item.id})">💰</button>
+                            <button class="btn-edit" onclick="app.openWishlistModal(${item.id})">✏️</button>
+                            <button class="btn-delete" onclick="app.deleteWishlistItem(${item.id})">🗑️</button>
+                            ${!item.purchased ? `
+                                <button class="btn-pay" onclick="app.markWishlistPurchased(${item.id})">✓ Bought</button>
+                            ` : ''}
+                        </div>
+                    </div>
+                </div>
+            `;
+        }).join('');
+
+        grid.innerHTML = html;
+    }
+
+    async updateWishlistSavings(id) {
+        const item = await this.db.get('wishlist', id);
+        const amount = prompt(`Add to savings for ${item.name}:`, '0');
+        
+        if (amount !== null && !isNaN(parseFloat(amount))) {
+            item.savedAmount = (item.savedAmount || 0) + parseFloat(amount);
+            await this.db.update('wishlist', item);
+            this.showToast('Savings updated!', 'success');
+            await this.loadWishlist();
+        }
+    }
+
+    async markWishlistPurchased(id) {
+        const item = await this.db.get('wishlist', id);
+        
+        if (confirm(`Mark "${item.name}" as purchased?`)) {
+            item.purchased = true;
+            item.purchasedDate = new Date().toISOString().split('T')[0];
+            await this.db.update('wishlist', item);
+
+            // Create expense transaction
+            await this.db.add('transactions', {
+                date: item.purchasedDate,
+                type: 'expense',
+                category: 'Shopping',
+                description: item.name,
+                amount: item.price,
+                account: 'bank',
+                currency: item.currency || this.currentCurrency,
+                notes: 'From wishlist',
+                createdAt: new Date().toISOString()
+            });
+
+            this.showToast('Item marked as purchased & expense created!', 'success');
+            await this.loadWishlist();
+            await this.loadDashboard();
+        }
+    }
+
+    async deleteWishlistItem(id) {
+        if (!confirm('Remove from wishlist?')) return;
+        
+        await this.db.delete('wishlist', id);
+        this.showToast('Removed from wishlist', 'success');
+        await this.loadWishlist();
+    }
+
+    async exportWishlist() {
+        const items = await this.db.getAll('wishlist');
+        this.downloadFile(
+            JSON.stringify(items, null, 2),
+            `wishlist-${new Date().toISOString().split('T')[0]}.json`,
+            'application/json'
+        );
+        this.showToast('Wishlist exported!', 'success');
+    }
+
+    // ==========================================
+    // DOCUMENTS FUNCTIONS - COMPLETE
+    // ==========================================
+    
+    async openDocumentModal(type = 'document', editId = null) {
+        const form = document.getElementById('documentForm');
+        const title = document.getElementById('documentModalTitle');
+
+        if (editId) {
+            title.textContent = 'Edit Document';
+            const doc = await this.db.get('documents', editId);
+            
+            document.getElementById('docType').value = doc.type;
+            document.getElementById('docTitle').value = doc.title;
+            document.getElementById('docProduct').value = doc.product || '';
+            document.getElementById('docPurchaseDate').value = doc.purchaseDate || '';
+            document.getElementById('docExpiryDate').value = doc.expiryDate || '';
+            document.getElementById('docAmount').value = doc.amount || '';
+            document.getElementById('docCompany').value = doc.company || '';
+            document.getElementById('docNotes').value = doc.notes || '';
+            document.getElementById('docReminder').checked = doc.reminder;
+            
+            form.dataset.editId = editId;
+        } else {
+            title.textContent = type === 'warranty' ? 'Add Warranty' : 'Add Document';
+            form.reset();
+            document.getElementById('docType').value = type === 'warranty' ? 'warranty' : 'receipt';
+            delete form.dataset.editId;
+        }
+
+        this.openModal('documentModal');
+    }
+
+    async saveDocument() {
+        const form = document.getElementById('documentForm');
+        const file = document.getElementById('docFile')?.files[0];
+        
+        if (!file && !form.dataset.editId) {
+            this.showToast('Please upload a file', 'error');
+            return;
+        }
+
+        let fileData = null;
+        if (file) {
+            fileData = await this.fileToBase64(file);
+        }
+
+        const data = {
+            type: document.getElementById('docType').value,
+            title: document.getElementById('docTitle').value,
+            product: document.getElementById('docProduct').value,
+            purchaseDate: document.getElementById('docPurchaseDate').value,
+            expiryDate: document.getElementById('docExpiryDate').value,
+            amount: parseFloat(document.getElementById('docAmount').value) || 0,
+            company: document.getElementById('docCompany').value,
+            notes: document.getElementById('docNotes').value,
+            reminder: document.getElementById('docReminder').checked,
+            file: fileData,
+            currency: this.currentCurrency,
+            createdAt: new Date().toISOString()
+        };
+
+        try {
+            if (form.dataset.editId) {
+                data.id = parseInt(form.dataset.editId);
+                const existing = await this.db.get('documents', data.id);
+                if (!fileData) data.file = existing.file;
+                await this.db.update('documents', data);
+                this.showToast('Document updated!', 'success');
+            } else {
+                await this.db.add('documents', data);
+                this.showToast('Document saved!', 'success');
+            }
+
+            this.closeModal('documentModal');
+            form.reset();
+            await this.loadDocuments();
+            await this.refreshDashboardWidgets();
+        } catch (error) {
+            console.error('Error saving document:', error);
+            this.showToast('Error saving document', 'error');
+        }
+    }
+
+    async loadDocuments(filter = 'all') {
+        let documents = await this.db.getAll('documents');
+
+        if (filter !== 'all') {
+            documents = documents.filter(d => d.type === filter);
+        }
+
+        documents.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+
+        const warranties = documents.filter(d => d.type === 'warranty');
+        const active = warranties.filter(d => {
+            if (!d.expiryDate) return false;
+            return this.getDaysUntil(d.expiryDate) > 0;
+        });
+        const expiringSoon = active.filter(d => this.getDaysUntil(d.expiryDate) <= 30);
+
+        this.updateElementText('totalDocuments', documents.length);
+        this.updateElementText('activeWarranties', active.length);
+        this.updateElementText('expiringSoon', expiringSoon.length);
+
+        const totalSize = documents.reduce((sum, d) => {
+            if (d.file) {
+                return sum + (d.file.length * 0.75 / 1024 / 1024);
+            }
+            return sum;
+        }, 0);
+        this.updateElementText('storageUsed', totalSize.toFixed(2) + ' MB');
+
+        this.renderDocumentsGrid(documents);
+    }
+
+    renderDocumentsGrid(documents) {
+        const grid = document.getElementById('documentsGrid');
+        if (!grid) return;
+        
+        if (documents.length === 0) {
+            grid.innerHTML = '<p style="text-align:center; color:var(--text-secondary); padding:2rem;">No documents yet</p>';
+            return;
+        }
+
+        const typeIcons = {
+            receipt: '📄', warranty: '🛡️', insurance: '🏥',
+            contract: '📋', manual: '📖', other: '📦'
+        };
+
+        const html = documents.map(doc => {
+            const isExpiring = doc.expiryDate && this.getDaysUntil(doc.expiryDate) <= 30 && this.getDaysUntil(doc.expiryDate) > 0;
+            const isExpired = doc.expiryDate && this.getDaysUntil(doc.expiryDate) < 0;
+
+            return `
+                <div class="document-card ${isExpiring ? 'expiring' : ''} ${isExpired ? 'expired' : ''}">
+                    <div class="doc-icon">${typeIcons[doc.type]}</div>
+                    <div class="doc-content">
+                        <h3>${doc.title}</h3>
+                        ${doc.product ? `<p class="doc-product">${doc.product}</p>` : ''}
+                        <div class="doc-meta">
+                            ${doc.company ? `<span>🏢 ${doc.company}</span>` : ''}
+                            ${doc.purchaseDate ? `<span>📅 ${doc.purchaseDate}</span>` : ''}
+                        </div>
+                        ${doc.expiryDate ? `
+                            <p class="doc-expiry ${isExpiring ? 'warning' : ''} ${isExpired ? 'expired' : ''}">
+                                ${isExpired ? '❌ Expired' : isExpiring ? '⚠️ Expiring Soon' : '✓ Valid'} 
+                                • ${doc.expiryDate}
+                            </p>
+                        ` : ''}
+                        ${doc.notes ? `<p class="doc-notes">${doc.notes}</p>` : ''}
+                    </div>
+                    <div class="doc-actions">
+                        <button class="btn-edit" onclick="app.viewDocument(${doc.id})">👁️ View</button>
+                        <button class="btn-edit" onclick="app.openDocumentModal('document', ${doc.id})">✏️</button>
+                        <button class="btn-delete" onclick="app.deleteDocument(${doc.id})">🗑️</button>
+                    </div>
+                </div>
+            `;
+        }).join('');
+
+        grid.innerHTML = html;
+    }
+
+    async viewDocument(id) {
+        const doc = await this.db.get('documents', id);
+        if (doc.file) {
+            const win = window.open();
+            win.document.write(`
+                <html>
+                    <head><title>${doc.title}</title></head>
+                    <body style="margin:0; display:flex; justify-content:center; align-items:center; min-height:100vh; background:#000;">
+                        ${doc.file.startsWith('data:application/pdf') 
+                            ? `<iframe src="${doc.file}" style="width:100%; height:100vh; border:none;"></iframe>`
+                            : `<img src="${doc.file}" style="max-width:100%; max-height:100vh;">`
+                        }
+                    </body>
+                </html>
+            `);
+        }
+    }
+
+    async deleteDocument(id) {
+        if (!confirm('Delete this document?')) return;
+        
+        await this.db.delete('documents', id);
+        this.showToast('Document deleted', 'success');
+        await this.loadDocuments();
+        await this.refreshDashboardWidgets();
+    }
+
+    async searchDocuments(query) {
+        const documents = await this.db.getAll('documents');
+        const filtered = documents.filter(doc => 
+            doc.title.toLowerCase().includes(query.toLowerCase()) ||
+            (doc.product && doc.product.toLowerCase().includes(query.toLowerCase())) ||
+            (doc.company && doc.company.toLowerCase().includes(query.toLowerCase()))
+        );
+        this.renderDocumentsGrid(filtered);
+    }
+
+    // ==========================================
+    // ANALYTICS FUNCTIONS - COMPLETE
+    // ==========================================
+    
+    async generateAnalytics() {
+        const timeRange = document.getElementById('analyticsTimeRange')?.value || 'thisMonth';
+        let startDate, endDate;
+
+        if (timeRange === 'custom') {
+            startDate = document.getElementById('analyticsStartDate')?.value;
+            endDate = document.getElementById('analyticsEndDate')?.value;
+            
+            if (!startDate || !endDate) {
+                this.showToast('Please select date range', 'error');
+                return;
+            }
+        }
+
+        try {
+            const report = await this.analytics.generateReport(timeRange, startDate, endDate);
+            this.renderAnalytics(report);
+        } catch (error) {
+            console.error('Error generating analytics:', error);
+            this.showToast('Error generating analytics', 'error');
+        }
+    }
+
+    renderAnalytics(report) {
+        this.updateElementText('analyticsTransactionCount', report.summary.transactionCount);
+        this.updateElementText('analyticsAvgDaily', this.formatCurrency(report.summary.avgDailySpend));
+        this.updateElementText('analyticsHighestExpense', this.formatCurrency(report.summary.highestExpense));
+        this.updateElementText('analyticsSavingsRate', report.summary.savingsRate.toFixed(1) + '%');
+
+        this.renderAnalyticsCharts(report);
+        this.renderAnalyticsTable(report);
+    }
+
+    renderAnalyticsCharts(report) {
+        if (!this.analytics) return;
+
+        const monthlyData = report.monthlyTrend || {};
+        const months = Object.keys(monthlyData).sort();
+        
+        // Income vs Expense Trend
+        this.renderChart('incomeExpenseTrendChart', 'line', {
+            labels: months,
+            datasets: [
+                {
+                    label: 'Income',
+                    data: months.map(m => monthlyData[m]?.income || 0),
+                    borderColor: '#10b981',
+                    backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                    tension: 0.4,
+                    fill: true
+                },
+                {
+                    label: 'Expense',
+                    data: months.map(m => monthlyData[m]?.expense || 0),
+                    borderColor: '#ef4444',
+                    backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                    tension: 0.4,
+                    fill: true
+                }
+            ]
+        });
+
+        // Category Breakdown
+        const categoryData = report.categoryBreakdown || {};
+        const categories = Object.keys(categoryData);
+        
+        if (categories.length > 0) {
+            this.renderChart('categoryPieChart', 'pie', {
+                labels: categories,
+                datasets: [{
+                    data: categories.map(c => categoryData[c]?.amount || 0),
+                    backgroundColor: [
+                        '#6366f1', '#8b5cf6', '#ec4899', '#f59e0b',
+                        '#10b981', '#3b82f6', '#ef4444', '#06b6d4'
+                    ]
+                }]
+            });
+        }
+
+        // Daily Pattern
+        const dailyPattern = report.dailyPattern || {};
+        this.renderChart('dailyPatternChart', 'bar', {
+            labels: Object.keys(dailyPattern),
+            datasets: [{
+                label: 'Spending by Day',
+                data: Object.values(dailyPattern),
+                backgroundColor: '#6366f1'
+            }]
+        });
+
+        // Top Categories
+        const topCategories = report.topCategories || [];
+        if (topCategories.length > 0) {
+            this.renderChart('topCategoriesChart', 'bar', {
+                labels: topCategories.map(c => c.category),
+                datasets: [{
+                    label: 'Amount',
+                    data: topCategories.map(c => c.amount),
+                    backgroundColor: ['#ef4444', '#f59e0b', '#10b981', '#3b82f6', '#8b5cf6']
+                }]
+            }, {
+                indexAxis: 'y'
+            });
+        }
+
+        // Monthly Comparison
+        this.renderChart('monthlyComparisonChart', 'bar', {
+            labels: months,
+            datasets: [
+                {
+                    label: 'Income',
+                    data: months.map(m => monthlyData[m]?.income || 0),
+                    backgroundColor: '#10b981'
+                },
+                {
+                    label: 'Expense',
+                    data: months.map(m => monthlyData[m]?.expense || 0),
+                    backgroundColor: '#ef4444'
+                }
+            ]
+        });
+
+        // Account Distribution
+        const accountDist = report.accountDistribution || { cash: { expense: 0 }, bank: { expense: 0 } };
+        this.renderChart('accountDistributionChart', 'doughnut', {
+            labels: ['Cash', 'Bank'],
+            datasets: [{
+                data: [accountDist.cash.expense, accountDist.bank.expense],
+                backgroundColor: ['#f59e0b', '#3b82f6']
+            }]
+        });
+
+        // Growth Rate
+        const comparison = report.comparison || { income: { change: 0 }, expense: { change: 0 }, savings: { change: 0 } };
+        this.renderChart('growthRateChart', 'bar', {
+            labels: ['Income', 'Expense', 'Savings'],
+            datasets: [{
+                label: 'Growth Rate (%)',
+                data: [
+                    comparison.income.change,
+                    comparison.expense.change,
+                    comparison.savings.change
+                ],
+                backgroundColor: (context) => {
+                    const value = context.parsed?.y || 0;
+                    return value >= 0 ? '#10b981' : '#ef4444';
+                }
+            }]
+        });
+    }
+
+    renderAnalyticsTable(report) {
+        const container = document.getElementById('analyticsTableContainer');
+        if (!container) return;
+        
+        const categoryData = report.categoryBreakdown || {};
+        
+        const html = `
+            <table class="transaction-table">
+                <thead>
+                    <tr>
+                        <th>Category</th>
+                        <th>Transactions</th>
+                        <th>Total Amount</th>
+                        <th>Percentage</th>
+                        <th>Avg per Transaction</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${Object.entries(categoryData).map(([category, data]) => `
+                        <tr>
+                            <td><strong>${category}</strong></td>
+                            <td>${data.count}</td>
+                            <td>${this.formatCurrency(data.amount)}</td>
+                            <td>${data.percentage.toFixed(1)}%</td>
+                            <td>${this.formatCurrency(data.amount / data.count)}</td>
+                        </tr>
+                    `).join('')}
+                </tbody>
+                <tfoot>
+                    <tr>
+                        <td><strong>Total</strong></td>
+                        <td>${report.summary?.transactionCount || 0}</td>
+                        <td>${this.formatCurrency(report.summary?.totalExpense || 0)}</td>
+                        <td>100%</td>
+                        <td>-</td>
+                    </tr>
+                </tfoot>
+            </table>
+        `;
+
+        container.innerHTML = html;
+    }
+
+    // ==========================================
+    // INSIGHTS FUNCTIONS - COMPLETE
+    // ==========================================
+    
+    async loadInsights() {
+        const insights = await this.db.getAll('insights');
+        this.renderInsightsList(insights);
+    }
+
+    async refreshInsights() {
+        this.showToast('Generating insights...', 'info');
+        try {
+            const insights = await this.insights.generateAllInsights();
+            this.renderInsightsList(insights);
+            
+            const insightCount = document.getElementById('insightCount');
+            if (insightCount) insightCount.textContent = insights.length;
+            
+            this.showToast('Insights updated!', 'success');
+        } catch (error) {
+            console.error('Error generating insights:', error);
+            this.showToast('Error generating insights', 'error');
+        }
+    }
+
+    filterInsights(category) {
+        this.db.getAll('insights').then(insights => {
+            if (category === 'all') {
+                this.renderInsightsList(insights);
+            } else {
+                const filtered = insights.filter(i => i.category === category);
+                this.renderInsightsList(filtered);
+            }
+        });
+    }
+
+    renderInsightsList(insights) {
+        const container = document.getElementById('insightsList');
+        if (!container) return;
+        
+        if (insights.length === 0) {
+            container.innerHTML = '<p style="text-align:center; color:var(--text-secondary); padding:3rem;">No insights available. Add more transactions to get personalized insights!</p>';
+            return;
+        }
+
+        const html = insights.map(insight => `
+            <div class="insight-card ${insight.priority}">
+                <div class="insight-header">
+                    <div class="insight-icon-large">${insight.icon}</div>
+                    <div class="insight-title-area">
+                        <h3>${insight.title}</h3>
+                        <span class="insight-badge ${insight.priority}">${insight.priority}</span>
+                    </div>
+                </div>
+                <p class="insight-message">${insight.message}</p>
+                ${insight.action ? `
+                    <button class="btn btn-primary btn-sm" onclick="app.switchTab('${insight.actionLink || 'dashboard'}')">
+                        ${insight.action}
+                    </button>
+                ` : ''}
+            </div>
+        `).join('');
+
+        container.innerHTML = html;
+    }
+
+    // ==========================================
+    // RECEIPT SCANNER FUNCTIONS - COMPLETE
+    // ==========================================
+    
+    openReceiptScanner() {
+        this.openModal('receiptScannerModal');
+        this.resetScanner();
+    }
+
+    async handleReceiptUpload(file) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            const preview = document.getElementById('receiptPreview');
+            if (preview) {
+                preview.innerHTML = `
+                    <img src="${e.target.result}" alt="Receipt" style="max-width:100%; border-radius:8px;">
+                `;
+            }
+        };
+        reader.readAsDataURL(file);
+
+        const statusEl = document.getElementById('scannerStatus');
+        if (statusEl) {
+            statusEl.innerHTML = `
+                <div class="status-icon">🔄</div>
+                <p>Scanning receipt...</p>
+            `;
+        }
+
+        try {
+            const scannedData = await this.scanner.scanReceipt(file);
+            this.displayScannedData(scannedData);
+        } catch (error) {
+            if (statusEl) {
+                statusEl.innerHTML = `
+                    <div class="status-icon">❌</div>
+                    <p>Failed to scan receipt. Please try again.</p>
+                `;
+            }
+            this.showToast('Scanner error: ' + error.message, 'error');
+        }
+    }
+
+    displayScannedData(data) {
+        const statusEl = document.getElementById('scannerStatus');
+        if (statusEl) {
+            statusEl.innerHTML = `
+                <div class="status-icon">✅</div>
+                <p>Receipt scanned successfully!</p>
+            `;
+        }
+
+        const html = `
+            <div class="scanned-info">
+                <h3>Scanned Information</h3>
+                ${data.store ? `<p><strong>Store:</strong> ${data.store}</p>` : ''}
+                ${data.date ? `<p><strong>Date:</strong> ${data.date}</p>` : ''}
+                ${data.total > 0 ? `<p><strong>Total:</strong> ${this.formatCurrency(data.total)}</p>` : ''}
+                
+                ${data.items && data.items.length > 0 ? `
+                    <h4>Items Found:</h4>
+                    <ul>
+                        ${data.items.map(item => `
+                            <li>${item.name} - ${this.formatCurrency(item.price)}</li>
+                        `).join('')}
+                    </ul>
+                ` : ''}
+            </div>
+        `;
+
+        const scannedDataEl = document.getElementById('scannedData');
+        if (scannedDataEl) {
+            scannedDataEl.innerHTML = html;
+            scannedDataEl.dataset.scannedData = JSON.stringify(data);
+        }
+        
+        const actionsEl = document.getElementById('scannerActions');
+        if (actionsEl) {
+            actionsEl.style.display = 'flex';
+        }
+    }
+
+    async confirmScannedReceipt() {
+        const scannedDataEl = document.getElementById('scannedData');
+        const dataStr = scannedDataEl?.dataset.scannedData;
+        if (!dataStr) return;
+
+        const data = JSON.parse(dataStr);
+
+        await this.db.add('transactions', {
+            date: data.date || new Date().toISOString().split('T')[0],
+            type: 'expense',
+            category: 'Shopping',
+            description: data.store || 'Receipt Scan',
+            amount: data.total || 0,
+            account: 'cash',
+            currency: this.currentCurrency,
+            notes: `Scanned receipt - ${data.items?.length || 0} items`,
+            createdAt: new Date().toISOString()
+        });
+
+        this.closeModal('receiptScannerModal');
+        this.showToast('Transaction created from receipt!', 'success');
+        await this.loadDashboard();
+        await this.loadTransactions();
+    }
+
+    resetScanner() {
+        const imageInput = document.getElementById('receiptImageInput');
+        if (imageInput) imageInput.value = '';
+        
+        const preview = document.getElementById('receiptPreview');
+        if (preview) preview.innerHTML = '';
+        
+        const scannedData = document.getElementById('scannedData');
+        if (scannedData) scannedData.innerHTML = '';
+        
+        const actions = document.getElementById('scannerActions');
+        if (actions) actions.style.display = 'none';
+        
+        const status = document.getElementById('scannerStatus');
+        if (status) {
+            status.innerHTML = `
+                <div class="status-icon">⏳</div>
+                <p>Waiting for image...</p>
+            `;
+        }
+    }
+
+    // ==========================================
+    // SETTINGS FUNCTIONS - COMPLETE
+    // ==========================================
+    
+    async loadSettings() {
+        await this.loadCategories();
+        this.displayCurrencyList();
+    }
+
+    async addCategory() {
+        const name = document.getElementById('newCategoryName')?.value;
+        const type = document.getElementById('newCategoryType')?.value;
+        const icon = document.getElementById('newCategoryIcon')?.value || '📌';
+
+        if (!name) {
+            this.showToast('Please enter category name', 'error');
+            return;
+        }
+
+        await this.db.add('categories', { name, type, icon });
+        
+        const nameInput = document.getElementById('newCategoryName');
+        const iconInput = document.getElementById('newCategoryIcon');
+        if (nameInput) nameInput.value = '';
+        if (iconInput) iconInput.value = '';
+        
+        this.showToast('Category added!', 'success');
+        await this.loadCategories();
+    }
+
+    async loadCategories() {
+        const categories = await this.db.getAll('categories');
+        const container = document.getElementById('categoriesList');
+        if (!container) return;
+        
+        const html = categories.map(cat => `
+            <div class="category-item">
+                <span>${cat.icon} ${cat.name} <small>(${cat.type})</small></span>
+                <button class="btn-delete" onclick="app.deleteCategory(${cat.id})">🗑️</button>
+            </div>
+        `).join('');
+        container.innerHTML = html;
+    }
+
+    async deleteCategory(id) {
+        if (confirm('Delete this category?')) {
+            await this.db.delete('categories', id);
+            this.showToast('Category deleted', 'success');
+            await this.loadCategories();
+        }
+    }
+
+    // ==========================================
+    // IMPORT/EXPORT FUNCTIONS - COMPLETE
+    // ==========================================
+    
+    async exportData(format) {
+        const transactions = await this.db.getAll('transactions');
+        const date = new Date().toISOString().split('T')[0];
+
+        if (format === 'json') {
+            this.downloadFile(
+                JSON.stringify(transactions, null, 2),
+                `transactions-${date}.json`,
+                'application/json'
+            );
+        } else if (format === 'csv') {
+            const csv = this.convertToCSV(transactions);
+            this.downloadFile(csv, `transactions-${date}.csv`, 'text/csv');
+        } else if (format === 'excel') {
+            // Basic Excel export (requires XLSX library)
+            if (typeof XLSX !== 'undefined') {
+                const ws = XLSX.utils.json_to_sheet(transactions);
+                const wb = XLSX.utils.book_new();
+                XLSX.utils.book_append_sheet(wb, ws, 'Transactions');
+                XLSX.writeFile(wb, `transactions-${date}.xlsx`);
+            } else {
+                this.showToast('Excel library not loaded', 'error');
+                return;
+            }
+        }
+
+        this.showToast(`Data exported as ${format.toUpperCase()}!`, 'success');
+    }
+
+    convertToCSV(data) {
+        if (data.length === 0) return '';
+
+        const headers = Object.keys(data[0]);
+        const csvRows = [];
+
+        // Add headers
+        csvRows.push(headers.join(','));
+
+        // Add data
+        for (const row of data) {
+            const values = headers.map(header => {
+                const value = row[header];
+                return typeof value === 'string' && value.includes(',') 
+                    ? `"${value}"` 
+                    : value;
+            });
+            csvRows.push(values.join(','));
+        }
+
+        return csvRows.join('\n');
+    }
+
+    async exportFullBackup() {
+        const backup = {
+            version: '1.0',
+            exportDate: new Date().toISOString(),
+            data: {
+                transactions: await this.db.getAll('transactions'),
+                subscriptions: await this.db.getAll('subscriptions'),
+                shopping_lists: await this.db.getAll('shopping_lists'),
+                wishlist: await this.db.getAll('wishlist'),
+                documents: await this.db.getAll('documents'),
+                categories: await this.db.getAll('categories'),
+                currencies: await this.db.getAll('currencies')
+            }
+        };
+
+        this.downloadFile(
+            JSON.stringify(backup, null, 2),
+            `expense-tracker-backup-${new Date().toISOString().split('T')[0]}.json`,
+            'application/json'
+        );
+
+        this.showToast('Full backup created!', 'success');
+    }
+
+    async importData() {
+        const fileInput = document.getElementById('importFile');
+        const file = fileInput?.files[0];
+        
+        if (!file) {
+            this.showToast('Please select a file', 'error');
+            return;
+        }
+
+        try {
+            const text = await file.text();
+            const data = JSON.parse(text);
+
+            // Detect backup format
+            if (data.version && data.data) {
+                // Full backup
+                for (const [store, items] of Object.entries(data.data)) {
+                    for (const item of items) {
+                        await this.db.add(store, item);
+                    }
+                }
+                this.showToast('Full backup restored!', 'success');
+            } else if (Array.isArray(data)) {
+                // Transaction array
+                for (const txn of data) {
+                    await this.db.add('transactions', txn);
+                }
+                this.showToast('Transactions imported!', 'success');
+            } else {
+                this.showToast('Invalid file format', 'error');
+                return;
+            }
+
+            // Reload all data
+            await this.loadDashboard();
+            await this.loadTransactions();
+            
+            if (fileInput) fileInput.value = '';
+            const fileName = document.getElementById('fileName');
+            if (fileName) fileName.textContent = 'No file chosen';
+            
+        } catch (error) {
+            console.error('Import error:', error);
+            this.showToast('Import failed: ' + error.message, 'error');
+        }
+    }
+
+    async clearAllData() {
+        try {
+            const stores = ['transactions', 'subscriptions', 'shopping_lists', 'wishlist', 
+                           'documents', 'insights', 'notifications'];
+            
+            for (const store of stores) {
+                const items = await this.db.getAll(store);
+                for (const item of items) {
+                    await this.db.delete(store, item.id);
+                }
+            }
+
+            this.showToast('All data cleared!', 'success');
+            await this.loadDashboard();
+            
+        } catch (error) {
+            console.error('Clear data error:', error);
+            this.showToast('Failed to clear data', 'error');
+        }
+    }
 
     // ==========================================
     // UTILITY FUNCTIONS
