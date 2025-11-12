@@ -1471,7 +1471,8 @@ async function autoInjectExportButtons() {
             }
             
             if (!injected) {
-                console.warn(`⚠️ Section not found for: ${storeName}`);
+                // Silently skip missing sections
+// console.warn(`⚠️ Section not found for: ${storeName}`);
             }
         }
         
