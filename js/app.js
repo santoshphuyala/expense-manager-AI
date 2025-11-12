@@ -2535,16 +2535,7 @@ function refreshDashboard() {
         updateBudgetAlerts();
     }
 }
-    // Add this after the refreshDashboard function
-// Auto-refresh dashboard every 5 seconds
-setInterval(refreshDashboard, 5000);
-
-// Also refresh on storage changes from other tabs
-window.addEventListener('storage', function(e) {
-    if (e.key === 'expenses') {
-        refreshDashboard();
-    }
-});
+   
 // ==========================================
 // UTILITY FUNCTIONS
 // ==========================================
@@ -2825,3 +2816,46 @@ window.addEventListener('unhandledrejection', (event) => {
 });
 
 console.log('📦 Script loaded successfully');
+
+// ==================== DASHBOARD REFRESH UTILITY ====================
+function refreshDashboard() {
+    try {
+        if (typeof updateUpcomingRenewals === 'function') {
+            updateUpcomingRenewals();
+        }
+        if (typeof updateUpcomingBills === 'function') {
+            updateUpcomingBills();
+        }
+        if (typeof updateExpiringWarranties === 'function') {
+            updateExpiringWarranties();
+        }
+        if (typeof updateBudgetAlerts === 'function') {
+            updateBudgetAlerts();
+        }
+    } catch (error) {
+        console.log('Dashboard refresh error:', error);
+    }
+}
+
+// Auto-refresh dashboard every 10 seconds
+if (typeof setInterval !== 'undefined') {
+    setInterval(refreshDashboard, 10000);
+}
+
+// Refresh on storage changes from other tabs
+if (typeof window !== 'undefined') {
+    window.addEventListener('storage', function(e) {
+        if (e.key === 'expenses') {
+            refreshDashboard();
+        }
+    });
+}
+
+// Refresh on page visibility change
+if (typeof document !== 'undefined') {
+    document.addEventListener('visibilitychange', function() {
+        if (!document.hidden) {
+            refreshDashboard();
+        }
+    });
+}
