@@ -1514,86 +1514,43 @@ function attachDashboardListeners() {
 const backupManager = new BackupManager();
 window.backupManager = backupManager;
 
-function initializeBackupSystem() {
+// backup.js - Around line 1542
+
+async function initializeBackupSystem() {
     console.log('🚀 Initializing Backup System for ExpenseTrackerProDB...');
     
-    document.addEventListener('click', async (e) => {
-        const target = e.target.closest('a, button');
-        if (!target) return;
-
-        const moduleName = target.dataset.module;
-        if (!moduleName) return;
-
-        e.preventDefault();
-        e.stopPropagation();
-
-        if (target.classList.contains('btn-quick-import-excel')) {
-            const input = document.createElement('input');
-            input.type = 'file';
-            input.accept = '.xlsx,.xls';
-            input.onchange = (e) => {
-                if (e.target.files[0]) {
-                    backupManager.importModuleExcel(e.target.files[0], moduleName);
-                }
-            };
-            input.click();
-            
-        } else if (target.classList.contains('export-json')) {
-            await backupManager.exportModuleJSON(moduleName);
-            
-        } else if (target.classList.contains('export-excel')) {
-            await backupManager.exportModuleExcel(moduleName);
-            
-        } else if (target.classList.contains('import-json')) {
-            const input = document.createElement('input');
-            input.type = 'file';
-            input.accept = '.json';
-            input.onchange = (e) => {
-                if (e.target.files[0]) {
-                    backupManager.importModuleJSON(e.target.files[0], moduleName);
-                }
-            };
-            input.click();
-            
-        } else if (target.classList.contains('import-excel')) {
-            const input = document.createElement('input');
-            input.type = 'file';
-            input.accept = '.xlsx,.xls';
-            input.onchange = (e) => {
-                if (e.target.files[0]) {
-                    backupManager.importModuleExcel(e.target.files[0], moduleName);
-                }
-            };
-            input.click();
+    try {
+        // Wait for DOM to be ready
+        if (document.readyState === 'loading') {
+            await new Promise(resolve => {
+                document.addEventListener('DOMContentLoaded', resolve);
+            });
         }
-    });
 
-    setTimeout(autoInjectExportButtons, 500);
-    setTimeout(autoInjectExportButtons, 2000);
+        // Add dashboard backup UI
+        addBackupDashboardUI();
+        
+        // Only auto-inject if we're on a page with sections
+        const hasSections = document.querySelector('[id$="-section"]');
+        if (hasSections) {
+            // Use MutationObserver for dynamic content
+            const observer = new MutationObserver(() => {
+                autoInjectExportButtons();
+            });
+            
+            observer.observe(document.body, {
+                childList: true,
+                subtree: true
+            });
+            
+            // Initial injection
+            setTimeout(autoInjectExportButtons, 500);
+        }
 
-    console.log('✅ Backup system ready');
-    console.log('💡 Debug: BackupHelper.inspectDatabase()');
-}
-
-const style = document.createElement('style');
-style.textContent = `
-    @keyframes slideInRight {
-        from { transform: translateX(100%); opacity: 0; }
-        to { transform: translateX(0); opacity: 1; }
+        console.log('✅ Backup system ready');
+        console.log('💡 Debug: BackupHelper.inspectDatabase()');
+        
+    } catch (error) {
+        console.error('❌ Backup system initialization failed:', error);
     }
-    @keyframes slideOutRight {
-        from { transform: translateX(0); opacity: 1; }
-        to { transform: translateX(100%); opacity: 0; }
-    }
-`;
-document.head.appendChild(style);
-
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initializeBackupSystem);
-} else {
-    initializeBackupSystem();
-}
-
-if (typeof module !== 'undefined' && module.exports) {
-    module.exports = { BackupManager, backupManager, BackupHelper };
 }
