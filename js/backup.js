@@ -1401,208 +1401,85 @@ function createDashboardBackupUI() {
     return container;
 }
 
-// ===============================================
-// ADD THIS MISSING FUNCTION TO backup.js
-// ===============================================
-
-/**
- * Injects export button into a specific section
- * @param {string} storeName - Name of the store
- * @param {string} sectionId - ID of the section to inject into
- */
-function injectExportButton(storeName, sectionId) {
-    const section = document.querySelector(sectionId);
-    if (!section) return;
-
-    // Check if button already exists
-    if (section.querySelector('.export-backup-btn')) {
-        return; // Button already exists
-    }
-
-    // Create button container
-    const buttonContainer = document.createElement('div');
-    buttonContainer.className = 'export-button-container';
-    buttonContainer.style.cssText = 'margin: 10px 0; text-align: right;';
-
-    // Create export button
-    const exportBtn = document.createElement('button');
-    exportBtn.className = 'export-backup-btn btn-secondary';
-    exportBtn.innerHTML = `
-        <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" style="vertical-align: middle; margin-right: 5px;">
-            <path d="M8.5 6.5a.5.5 0 0 0-1 0v3.793L6.354 9.146a.5.5 0 1 0-.708.708l2 2a.5.5 0 0 0 .708 0l2-2a.5.5 0 0 0-.708-.708L8.5 10.293V6.5z"/>
-            <path d="M14 14V4.5L9.5 0H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2zM9.5 3A1.5 1.5 0 0 0 11 4.5h2V14a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1h5.5v2z"/>
-        </svg>
-        Export ${formatStoreName(storeName)}
-    `;
-    exportBtn.style.cssText = `
-        padding: 8px 16px;
-        background: var(--secondary-color, #6c757d);
-        color: white;
-        border: none;
-        border-radius: 5px;
-        cursor: pointer;
-        font-size: 14px;
-        transition: all 0.3s ease;
-    `;
-
-    // Add hover effect
-    exportBtn.onmouseover = function() {
-        this.style.background = 'var(--secondary-dark, #5a6268)';
-        this.style.transform = 'translateY(-2px)';
-        this.style.boxShadow = '0 4px 8px rgba(0,0,0,0.2)';
-    };
-    exportBtn.onmouseout = function() {
-        this.style.background = 'var(--secondary-color, #6c757d)';
-        this.style.transform = 'translateY(0)';
-        this.style.boxShadow = 'none';
-    };
-
-    // Add click event
-    exportBtn.onclick = async function() {
-        try {
-            this.disabled = true;
-            this.innerHTML = '⏳ Exporting...';
-            
-            const data = await BackupHelper.exportStore(storeName);
-            
-            if (data && data.length > 0) {
-                showToast(`✅ Exported ${data.length} ${storeName} records`, 'success');
-            } else {
-                showToast(`ℹ️ No ${storeName} data to export`, 'info');
-            }
-            
-            this.disabled = false;
-            this.innerHTML = `
-                <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" style="vertical-align: middle; margin-right: 5px;">
-                    <path d="M8.5 6.5a.5.5 0 0 0-1 0v3.793L6.354 9.146a.5.5 0 1 0-.708.708l2 2a.5.5 0 0 0 .708 0l2-2a.5.5 0 0 0-.708-.708L8.5 10.293V6.5z"/>
-                    <path d="M14 14V4.5L9.5 0H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2zM9.5 3A1.5 1.5 0 0 0 11 4.5h2V14a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1h5.5v2z"/>
-                </svg>
-                Export ${formatStoreName(storeName)}
-            `;
-        } catch (error) {
-            console.error(`Export failed for ${storeName}:`, error);
-            showToast(`❌ Export failed: ${error.message}`, 'error');
-            this.disabled = false;
-            this.innerHTML = `🔄 Retry Export`;
-        }
-    };
-
-    buttonContainer.appendChild(exportBtn);
-    
-    // Insert at the beginning of the section
-    const sectionHeader = section.querySelector('h2, h3, .section-header');
-    if (sectionHeader) {
-        sectionHeader.after(buttonContainer);
-    } else {
-        section.insertBefore(buttonContainer, section.firstChild);
-    }
-}
-
-/**
- * Formats store name for display
- * @param {string} storeName - Store name to format
- * @returns {string} Formatted name
- */
-function formatStoreName(storeName) {
-    return storeName
-        .split('_')
-        .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-        .join(' ');
-}
-
-/**
- * Shows toast notification
- * @param {string} message - Message to display
- * @param {string} type - Type of toast (success, error, info)
- */
-function showToast(message, type = 'info') {
-    // Try to use existing toast function
-    if (typeof window.showToast === 'function') {
-        window.showToast(message, type);
-        return;
-    }
-
-    // Fallback toast implementation
-    const toast = document.createElement('div');
-    toast.className = `toast toast-${type}`;
-    toast.textContent = message;
-    toast.style.cssText = `
-        position: fixed;
-        top: 20px;
-        right: 20px;
-        padding: 15px 20px;
-        background: ${type === 'success' ? '#28a745' : type === 'error' ? '#dc3545' : '#17a2b8'};
-        color: white;
-        border-radius: 5px;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-        z-index: 10000;
-        animation: slideIn 0.3s ease;
-        max-width: 350px;
-    `;
-
-    document.body.appendChild(toast);
-
-    setTimeout(() => {
-        toast.style.animation = 'slideOut 0.3s ease';
-        setTimeout(() => toast.remove(), 300);
-    }, 3000);
-}
-
 // ==================== AUTO-INJECTION ====================
 
-function autoInjectExportButtons() {
-    console.log('🔍 Starting auto-injection...');
-    
-    const stores = [
-        'bills', 'categories', 'currencies', 'documents', 'insights',
-        'notifications', 'receipts', 'recurring', 'settings',
-        'shopping_lists', 'shopping_templates', 'splits',
-        'subscriptions', 'transactions', 'wishlist'
-    ];
-
-    // Mapping of store names to section IDs
-    const sectionMap = {
-        'bills': '#bills-section',
-        'categories': '#categories-section',
-        'currencies': '#currencies-section',
-        'documents': '#documents-section',
-        'insights': '#insights-section',
-        'notifications': '#notifications-section',
-        'receipts': '#receipts-section',
-        'recurring': '#recurring-section',
-        'settings': '#settings-section',
-        'shopping_lists': '#shoppingList-section',
-        'shopping_templates': '#shopping-templates-section',
-        'splits': '#splits-section',
-        'subscriptions': '#subscriptions-section',
-        'transactions': '#transactions-section',
-        'wishlist': '#wishlist-section'
-    };
-
-    let successCount = 0;
-    let skippedCount = 0;
-
-    stores.forEach(store => {
-        const sectionId = sectionMap[store];
-        const section = document.querySelector(sectionId);
+async function autoInjectExportButtons() {
+    try {
+        await backupManager.discoverAllStores();
         
-        if (section) {
-            // Only inject if section exists AND button doesn't already exist
-            const existingButton = section.querySelector('.export-backup-btn');
-            if (!existingButton) {
-                injectExportButton(store, sectionId);
-                console.log(`✅ Button added for ${store} at ${sectionId}`);
-                successCount++;
+        console.log('🔍 Starting auto-injection...');
+        
+        const dashboard = document.querySelector('#dashboard');
+        if (dashboard && !document.querySelector('.dashboard-backup-section')) {
+            const backupUI = createDashboardBackupUI();
+            const quickActions = dashboard.querySelector('.quick-actions');
+            if (quickActions) {
+                quickActions.after(backupUI);
             } else {
-                skippedCount++;
+                dashboard.insertBefore(backupUI, dashboard.firstChild);
             }
-        } else {
-            // Silently skip if section doesn't exist (not an error, just not on this page)
-            skippedCount++;
+            console.log('✅ Dashboard UI added');
+            attachDashboardListeners();
         }
-    });
-
-    console.log(`✅ Auto-injection complete: ${successCount} added, ${skippedCount} skipped`);
+        
+        const sectionMappings = {
+            'shopping_lists': ['#shopping-section', '#shopping-list-section', '#shoppingList-section'],
+            'shopping_templates': ['#shopping-templates-section', '#templates-section'],
+            'transactions': ['#transactions-section', '#transaction-section'],
+            'subscriptions': ['#subscriptions-section', '#subscription-section'],
+            'recurring': ['#recurring-section', '#recurring-transactions-section'],
+            'bills': ['#bills-section', '#bill-section'],
+            'categories': ['#categories-section', '#category-section'],
+            'wishlist': ['#wishlist-section', '#wish-list-section'],
+            'documents': ['#documents-section', '#document-section'],
+            'receipts': ['#receipts-section', '#receipt-section'],
+            'insights': ['#insights-section', '#insight-section'],
+            'notifications': ['#notifications-section', '#notification-section'],
+            'currencies': ['#currencies-section', '#currency-section'],
+            'settings': ['#settings-section', '#setting-section'],
+            'splits': ['#splits-section', '#split-section']
+        };
+        
+        for (const storeName of backupManager.detectedStores) {
+            const selectors = sectionMappings[storeName] || [`#${storeName}-section`];
+            let injected = false;
+            
+            for (const selector of selectors) {
+                const section = document.querySelector(selector);
+                
+                if (section && !section.querySelector('.module-export-buttons')) {
+                    const button = createModuleExportButton(storeName);
+                    
+                    const header = section.querySelector('.section-header, .module-header, header, .header');
+                    const actions = section.querySelector('.section-actions, .header-actions, .actions');
+                    
+                    if (actions) {
+                        actions.appendChild(button);
+                    } else if (header) {
+                        header.style.display = 'flex';
+                        header.style.justifyContent = 'space-between';
+                        header.style.alignItems = 'center';
+                        header.appendChild(button);
+                    } else {
+                        section.insertBefore(button, section.firstChild);
+                    }
+                    
+                    console.log(`✅ Button added for ${storeName} at ${selector}`);
+                    injected = true;
+                    break;
+                }
+            }
+            
+            if (!injected) {
+                console.warn(`⚠️ Section not found for: ${storeName}`);
+            }
+        }
+        
+        console.log('✅ Auto-injection complete');
+        
+    } catch (error) {
+        console.error('❌ Auto-injection failed:', error);
+    }
 }
 
 function attachDashboardListeners() {
@@ -1661,43 +1538,86 @@ function attachDashboardListeners() {
 const backupManager = new BackupManager();
 window.backupManager = backupManager;
 
-// backup.js - Around line 1542
-
-async function initializeBackupSystem() {
+function initializeBackupSystem() {
     console.log('🚀 Initializing Backup System for ExpenseTrackerProDB...');
     
-    try {
-        // Wait for DOM to be ready
-        if (document.readyState === 'loading') {
-            await new Promise(resolve => {
-                document.addEventListener('DOMContentLoaded', resolve);
-            });
-        }
+    document.addEventListener('click', async (e) => {
+        const target = e.target.closest('a, button');
+        if (!target) return;
 
-        // Add dashboard backup UI
-        addBackupDashboardUI();
-        
-        // Only auto-inject if we're on a page with sections
-        const hasSections = document.querySelector('[id$="-section"]');
-        if (hasSections) {
-            // Use MutationObserver for dynamic content
-            const observer = new MutationObserver(() => {
-                autoInjectExportButtons();
-            });
-            
-            observer.observe(document.body, {
-                childList: true,
-                subtree: true
-            });
-            
-            // Initial injection
-            setTimeout(autoInjectExportButtons, 500);
-        }
+        const moduleName = target.dataset.module;
+        if (!moduleName) return;
 
-        console.log('✅ Backup system ready');
-        console.log('💡 Debug: BackupHelper.inspectDatabase()');
-        
-    } catch (error) {
-        console.error('❌ Backup system initialization failed:', error);
+        e.preventDefault();
+        e.stopPropagation();
+
+        if (target.classList.contains('btn-quick-import-excel')) {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = '.xlsx,.xls';
+            input.onchange = (e) => {
+                if (e.target.files[0]) {
+                    backupManager.importModuleExcel(e.target.files[0], moduleName);
+                }
+            };
+            input.click();
+            
+        } else if (target.classList.contains('export-json')) {
+            await backupManager.exportModuleJSON(moduleName);
+            
+        } else if (target.classList.contains('export-excel')) {
+            await backupManager.exportModuleExcel(moduleName);
+            
+        } else if (target.classList.contains('import-json')) {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = '.json';
+            input.onchange = (e) => {
+                if (e.target.files[0]) {
+                    backupManager.importModuleJSON(e.target.files[0], moduleName);
+                }
+            };
+            input.click();
+            
+        } else if (target.classList.contains('import-excel')) {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = '.xlsx,.xls';
+            input.onchange = (e) => {
+                if (e.target.files[0]) {
+                    backupManager.importModuleExcel(e.target.files[0], moduleName);
+                }
+            };
+            input.click();
+        }
+    });
+
+    setTimeout(autoInjectExportButtons, 500);
+    setTimeout(autoInjectExportButtons, 2000);
+
+    console.log('✅ Backup system ready');
+    console.log('💡 Debug: BackupHelper.inspectDatabase()');
+}
+
+const style = document.createElement('style');
+style.textContent = `
+    @keyframes slideInRight {
+        from { transform: translateX(100%); opacity: 0; }
+        to { transform: translateX(0); opacity: 1; }
     }
+    @keyframes slideOutRight {
+        from { transform: translateX(0); opacity: 1; }
+        to { transform: translateX(100%); opacity: 0; }
+    }
+`;
+document.head.appendChild(style);
+
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initializeBackupSystem);
+} else {
+    initializeBackupSystem();
+}
+
+if (typeof module !== 'undefined' && module.exports) {
+    module.exports = { BackupManager, backupManager, BackupHelper };
 }
