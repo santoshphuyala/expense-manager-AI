@@ -1401,6 +1401,153 @@ function createDashboardBackupUI() {
     return container;
 }
 
+// ===============================================
+// ADD THIS MISSING FUNCTION TO backup.js
+// ===============================================
+
+/**
+ * Injects export button into a specific section
+ * @param {string} storeName - Name of the store
+ * @param {string} sectionId - ID of the section to inject into
+ */
+function injectExportButton(storeName, sectionId) {
+    const section = document.querySelector(sectionId);
+    if (!section) return;
+
+    // Check if button already exists
+    if (section.querySelector('.export-backup-btn')) {
+        return; // Button already exists
+    }
+
+    // Create button container
+    const buttonContainer = document.createElement('div');
+    buttonContainer.className = 'export-button-container';
+    buttonContainer.style.cssText = 'margin: 10px 0; text-align: right;';
+
+    // Create export button
+    const exportBtn = document.createElement('button');
+    exportBtn.className = 'export-backup-btn btn-secondary';
+    exportBtn.innerHTML = `
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" style="vertical-align: middle; margin-right: 5px;">
+            <path d="M8.5 6.5a.5.5 0 0 0-1 0v3.793L6.354 9.146a.5.5 0 1 0-.708.708l2 2a.5.5 0 0 0 .708 0l2-2a.5.5 0 0 0-.708-.708L8.5 10.293V6.5z"/>
+            <path d="M14 14V4.5L9.5 0H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2zM9.5 3A1.5 1.5 0 0 0 11 4.5h2V14a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1h5.5v2z"/>
+        </svg>
+        Export ${formatStoreName(storeName)}
+    `;
+    exportBtn.style.cssText = `
+        padding: 8px 16px;
+        background: var(--secondary-color, #6c757d);
+        color: white;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        font-size: 14px;
+        transition: all 0.3s ease;
+    `;
+
+    // Add hover effect
+    exportBtn.onmouseover = function() {
+        this.style.background = 'var(--secondary-dark, #5a6268)';
+        this.style.transform = 'translateY(-2px)';
+        this.style.boxShadow = '0 4px 8px rgba(0,0,0,0.2)';
+    };
+    exportBtn.onmouseout = function() {
+        this.style.background = 'var(--secondary-color, #6c757d)';
+        this.style.transform = 'translateY(0)';
+        this.style.boxShadow = 'none';
+    };
+
+    // Add click event
+    exportBtn.onclick = async function() {
+        try {
+            this.disabled = true;
+            this.innerHTML = '⏳ Exporting...';
+            
+            const data = await BackupHelper.exportStore(storeName);
+            
+            if (data && data.length > 0) {
+                showToast(`✅ Exported ${data.length} ${storeName} records`, 'success');
+            } else {
+                showToast(`ℹ️ No ${storeName} data to export`, 'info');
+            }
+            
+            this.disabled = false;
+            this.innerHTML = `
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" style="vertical-align: middle; margin-right: 5px;">
+                    <path d="M8.5 6.5a.5.5 0 0 0-1 0v3.793L6.354 9.146a.5.5 0 1 0-.708.708l2 2a.5.5 0 0 0 .708 0l2-2a.5.5 0 0 0-.708-.708L8.5 10.293V6.5z"/>
+                    <path d="M14 14V4.5L9.5 0H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2zM9.5 3A1.5 1.5 0 0 0 11 4.5h2V14a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1h5.5v2z"/>
+                </svg>
+                Export ${formatStoreName(storeName)}
+            `;
+        } catch (error) {
+            console.error(`Export failed for ${storeName}:`, error);
+            showToast(`❌ Export failed: ${error.message}`, 'error');
+            this.disabled = false;
+            this.innerHTML = `🔄 Retry Export`;
+        }
+    };
+
+    buttonContainer.appendChild(exportBtn);
+    
+    // Insert at the beginning of the section
+    const sectionHeader = section.querySelector('h2, h3, .section-header');
+    if (sectionHeader) {
+        sectionHeader.after(buttonContainer);
+    } else {
+        section.insertBefore(buttonContainer, section.firstChild);
+    }
+}
+
+/**
+ * Formats store name for display
+ * @param {string} storeName - Store name to format
+ * @returns {string} Formatted name
+ */
+function formatStoreName(storeName) {
+    return storeName
+        .split('_')
+        .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+        .join(' ');
+}
+
+/**
+ * Shows toast notification
+ * @param {string} message - Message to display
+ * @param {string} type - Type of toast (success, error, info)
+ */
+function showToast(message, type = 'info') {
+    // Try to use existing toast function
+    if (typeof window.showToast === 'function') {
+        window.showToast(message, type);
+        return;
+    }
+
+    // Fallback toast implementation
+    const toast = document.createElement('div');
+    toast.className = `toast toast-${type}`;
+    toast.textContent = message;
+    toast.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        padding: 15px 20px;
+        background: ${type === 'success' ? '#28a745' : type === 'error' ? '#dc3545' : '#17a2b8'};
+        color: white;
+        border-radius: 5px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        z-index: 10000;
+        animation: slideIn 0.3s ease;
+        max-width: 350px;
+    `;
+
+    document.body.appendChild(toast);
+
+    setTimeout(() => {
+        toast.style.animation = 'slideOut 0.3s ease';
+        setTimeout(() => toast.remove(), 300);
+    }, 3000);
+}
+
 // ==================== AUTO-INJECTION ====================
 
 function autoInjectExportButtons() {
